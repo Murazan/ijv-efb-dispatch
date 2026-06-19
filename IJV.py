@@ -335,10 +335,10 @@ def dashboard():
     url_username = st.query_params.get("username", "")
     
     # 2. Swap field to read Username and assign the URL parameter as its default value
-    sb_userid = st.text_input("Masukkan SimBrief Username:", value=url_username)
+    sb_userid = st.text_input("Enter SimBrief Username:", value=url_username)
     
     # 3. Create the layout button
-    trigger_generation = st.button("Generate Flight Plan PDF")
+    trigger_generation = st.button("Generate OFP PDF")
     
     # 4. AUTO-RUN SWITCH: If a URL user is detected and we haven't processed them yet, force-trigger execution
     if url_username and "auto_run_executed" not in st.session_state:
@@ -362,7 +362,7 @@ def dashboard():
                 st.error(f"❌ Gagal mengunduh data: {e}")
                 return
 
-        with st.spinner("⚙️ Memproses data dan merender PDF..."):
+        with st.spinner("⚙️ Generating..."):
             try:
                 # 3. DATA PREPARATION
                 data_obj = dict_to_obj(data_json)
@@ -1076,12 +1076,12 @@ REQUEST NO. {{data.params.request_id[-5:]}} / REV NBR {{data.general.release}}
                 pdf_buffer = io.BytesIO()
                 HTML(string=rendered_html).write_pdf(pdf_buffer)
                 
-                st.success("✅ Berhasil! File PDF telah dibuat dan siap diunduh.")
+                st.success("✅ OFP Generated and Ready for Download")
                 
                 # --- BERIKUT EDITAN UNTUK DIRECT PDF PREVIEW ---
                 pdf_filename = f"GIA{data_obj.general.flight_number}_Briefing_Final.pdf"
                 st.download_button(
-                    label="📥 Download Flight Plan PDF",
+                    label="📥 Download OFP PDF",
                     data=pdf_buffer.getvalue(),
                     file_name=pdf_filename,
                     mime="application/pdf",
