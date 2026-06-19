@@ -342,10 +342,6 @@ def dashboard():
             st.warning("Silakan masukkan SimBrief User ID terlebih dahulu.")
             return
             
-if st.button("Generate Flight Plan PDF"):
-        if not sb_userid:
-            st.warning("Silakan masukkan SimBrief Username terlebih dahulu.")
-            return
             
         with st.spinner(f"⏳ Mengunduh data dari SimBrief (Username: {sb_userid})..."):
             # This line must be indented further than the 'with' statement above
