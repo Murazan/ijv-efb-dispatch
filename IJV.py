@@ -1079,7 +1079,16 @@ REQUEST NO. {{data.params.request_id[-5:]}} / REV NBR {{data.general.release}}
                 st.success("✅ OFP Generated and Ready for Download")
                 
                 # --- BERIKUT EDITAN UNTUK DIRECT PDF PREVIEW ---
-                pdf_filename = f"{{data.general.icao_airline}}{data_obj.general.flight_number}_Briefing.pdf"
+                # Safely extract values with fallback strings if fields are missing or None
+                airline_icao = getattr(getattr(data_obj, 'general', {}), 'icao_airline', '') or 'FLIGHT'
+                flight_num = getattr(getattr(data_obj, 'general', {}), 'flight_number', '') or 'PLAN'
+                
+                # Sanitize values to remove any trailing/leading spaces or unintended characters
+                airline_icao = str(airline_icao).strip()
+                flight_num = str(flight_num).strip()
+
+                # Generate the safe final string name
+                pdf_filename = f"{airline_icao}{flight_num}_Briefing.pdf"
                 st.download_button(
                     label="📥 Download OFP PDF",
                     data=pdf_buffer.getvalue(),
