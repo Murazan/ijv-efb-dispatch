@@ -1088,34 +1088,6 @@ REQUEST NO. {{data.params.request_id[-5:]}} / REV NBR {{data.general.release}}
                     type="primary"
                 )
                 
-                # --- FIXED NATIVE PDF VIEWER COMPONENT ---
-                # --- ALTERNATIVE 1: COMPONENT BINARY BLOB VIEWER ---
-# --- ALTERNATIVE 2: FULL WEB TAB VIEWER ---
-                st.markdown("### 📄 Flight Plan PDF Preview")
-                
-                # Convert the buffer to a web-linkable string object
-                base64_pdf = base64.b64encode(pdf_buffer.getvalue()).decode('utf-8')
-                pdf_url = f"data:application/pdf;base64,{base64_pdf}"
-                
-                # Inject a custom CSS styled link that acts like a browser tab redirect
-                link_html = f"""
-                <a href="{pdf_url}" target="_blank" style="
-                    display: block;
-                    text-align: center;
-                    background-color: #4CAF50;
-                    color: white;
-                    padding: 14px 20px;
-                    margin: 10px 0;
-                    border: none;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    text-decoration: none;
-                    font-weight: bold;
-                    font-size: 16px;
-                ">🖥️ Open PDF Preview in New Full-Screen Tab</a>
-                """
-                st.markdown(link_html, unsafe_allow_html=True)
-                
             except Exception as e:
                 st.error(f"❌ Terjadi kesalahan saat memproses data/PDF: {e}")
 
