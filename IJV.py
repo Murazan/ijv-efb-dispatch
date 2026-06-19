@@ -179,12 +179,8 @@ def get_image_base64(path):
     return ""
 
 # ---------------------------------------------------------
-# BACKEND JINJA2 TEMPLATE STRING CACHE
+# VALIDATED HTML JINJA2 LAYOUT TEMPLATE
 # ---------------------------------------------------------
-# This variable placeholder represents your long customized base HTML layout structure
-# ==========================================================
-# COMPLETED AND UNBROKEN ENGLISH TEMPLATE STRING
-# ==========================================================
 template_str = """
 <!doctype html>
 <html lang="en">
@@ -198,27 +194,22 @@ template_str = """
             size: A4;
             font-family: Courier, monospace;
         }
-
-        /* LANDSCAPE PAGE DEFINITION FOR NOTAMS AND MAPS */
         @page landscape-page {
             size: A4 landscape;
             margin: 0.5cm;
             @bottom-right { content: "PAGE " counter(page) " OF " counter(pages); font-size: 8pt; font-family: Courier, monospace; color: #7D7D7D;}
             @top-right { content: "PACKAGE GIA{{data.general.flight_number}}"; font-size: 8pt; font-family: Courier, monospace; color: #7D7D7D;}
         }
-
         body {
             font-family: Courier, monospace;
             font-size: 10.5pt;
             line-height: 12pt;
             margin: 0;
         }
-
         .header { position: fixed; top: -10px; left: 0; right: 0; text-align: right; font-size: 8pt; color: #7D7D7D; font-family: Courier, monospace; }
         .footer { position: fixed; bottom: -20px; left: 0; right: 0; height: 20px; text-align: right; font-size: 8pt; color: #7D7D7D; font-family: Courier, monospace; }
         .page-number:before { content: "BRIEFING TEXT {{data.general.icao_airline}}{{data.general.flight_number}}-{{php_date('d-m-y', data.times.sched_out)}}-{{php_date('Hi', data.times.sched_out)}}-{{data.origin.icao_code}} PAGE " counter(page) " OF " counter(pages); }
         .page-number-footer:before { content: "PAGE " counter(page) " of " counter(pages); }
-
         pre {
             margin: 0;
             white-space: pre-wrap;
@@ -227,7 +218,6 @@ template_str = """
             font-size: 11pt;
             line-height: 13.5pt;
         }
-
         .nw-container { width: 100%; border: 2px solid #000; margin-bottom: 5px; page-break-inside: avoid; }
         .nw-header {
             background-color: #ADD8E6;
@@ -246,7 +236,6 @@ template_str = """
             margin-bottom: 2px;
             font-size: 10.5pt;
         }
-
         .footer-box {
             border: 2px solid black;
             border-radius: 15px;
@@ -257,93 +246,20 @@ template_str = """
             font-size: 9pt;
             page-break-inside: avoid;
         }
-
-        .landscape-section {
-            page: landscape-page;
-            font-family: Courier, monospace;
-            font-size: 10.5pt;
-        }
-
-        .notam-header-landscape {
-            text-align: center;
-            font-weight: bold;
-            font-size: 14pt;
-            margin-bottom: 5px;
-            width: 100%;
-        }
-
-        .notam-columns {
-            column-count: 2;
-            column-gap: 1cm;
-            column-rule: 1px solid #ccc;
-            text-align: justify;
-        }
-
-        .notam-group {
-            break-inside: auto;
-            margin-bottom: 15px;
-            display: block;
-        }
-
-        .notam-group-header {
-            font-weight: bold;
-            border-bottom: 1px solid black;
-            margin-bottom: 5px;
-            margin-top: 10px;
-            font-size: 11pt;
-            padding: 2px;
-        }
-
-        .notam-item {
-            margin-bottom: 12px;
-            break-inside: avoid;
-        }
-
-        .wx-header {
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 20px;
-            font-size: 12pt;
-        }
-        .wx-section {
-            margin-bottom: 20px;
-            break-inside: avoid;
-        }
-        .wx-airport-title {
-            font-weight: bold;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 2px;
-            margin-bottom: 5px;
-            font-family: Courier, monospace;
-        }
-        .wx-data {
-            font-family: Courier, monospace;
-            font-size: 10.5pt;
-            white-space: pre-wrap;
-        }
-
-        .map-container {
-            text-align: center;
-            width: 100%;
-            height: 100%;
-        }
-        .map-title {
-            font-weight: bold;
-            font-size: 14pt;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-        .map-image {
-            max-width: 100%;
-            max-height: 17cm;
-            object-fit: contain;
-            border: 1px solid #000;
-        }
-        .nav-row {
-            white-space: pre-wrap;
-            page-break-inside: avoid;
-            display: block;
-        }
+        .landscape-section { page: landscape-page; font-family: Courier, monospace; font-size: 10.5pt; }
+        .notam-header-landscape { text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 5px; width: 100%; }
+        .notam-columns { column-count: 2; column-gap: 1cm; column-rule: 1px solid #ccc; text-align: justify; }
+        .notam-group { break-inside: auto; margin-bottom: 15px; display: block; }
+        .notam-group-header { font-weight: bold; border-bottom: 1px solid black; margin-bottom: 5px; margin-top: 10px; font-size: 11pt; padding: 2px; }
+        .notam-item { margin-bottom: 12px; break-inside: avoid; }
+        .wx-header { text-align: center; font-weight: bold; margin-bottom: 20px; font-size: 12pt; }
+        .wx-section { margin-bottom: 20px; break-inside: avoid; }
+        .wx-airport-title { font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 2px; margin-bottom: 5px; font-family: Courier, monospace; }
+        .wx-data { font-family: Courier, monospace; font-size: 10.5pt; white-space: pre-wrap; }
+        .map-container { text-align: center; width: 100%; height: 100%; }
+        .map-title { font-weight: bold; font-size: 14pt; margin-bottom: 10px; text-align: center; }
+        .map-image { max-width: 100%; max-height: 17cm; object-fit: contain; border: 1px solid #000; }
+        .nav-row { white-space: pre-wrap; page-break-inside: avoid; display: block; }
         .page-break { page-break-after: always; }
     </style>
 </head>
@@ -413,25 +329,27 @@ PAX : {{data.weights.pax_count}}   CARGO : {{data.weights.cargo}}   PAYLOAD : {{
         <b>Flight Dispatch Center</b><br>
         Operation Center II Building 3rd Floor | Garuda City | Soekarno-Hatta International Airport<br>
         Cengkareng 19120, Indonesia<br>
-        Office Phone: +62 21 559 0451, +62 21 2560 1524 | Fax: +62 21 550 1911<br>
-        Email: flight-dispatch-center@garuda-indonesia.com | SITA: JKTOIGA
     </div>
     
     <div class="page-break"></div>
 
+    {% set req_id_truncated = data.params.request_id|string %}
+    {% set req_slice = req_id_truncated[-5:] if req_id_truncated|length >= 5 else req_id_truncated %}
     <pre>
 ---------------------------------------------------------------------------
                             DISPATCH RELEASE
 ---------------------------------------------------------------------------
-VALID U/I {{php_date('Hi', (data.times.sched_out|int) + 21600)}}Z  REF PLAN {{data.params.request_id[-5:]}} / REV NBR {{data.general.release}}
+VALID U/I {{php_date('Hi', (data.times.sched_out|int) + 21600)}}Z  REF PLAN {{req_slice}} / REV NBR {{data.general.release}}
 {{data.atc.callsign}}  {{php_date('dMy',data.times.sched_out)}}  ETD {{php_date('Hi',data.times.sched_out)}}Z  ETA {{php_date('Hi',data.times.est_in)}}Z / FT {{php_date('Hi',data.times.est_block)}} IFR {{data.aircraft.reg}}
 
 1. POD/POA : {{data.origin.icao_code}}/{{data.destination.icao_code}}
 2. INITIAL DESTINATION (FOR PLANNED RE-DISPATCH AS APPLICABLE):
 3. WX ORG {{data.origin.iata_code}}/{{data.origin.icao_code}} CHECKED
-   {% if alternates|length > 0 %}AL1 {{alternates[0].iata_code}}/{{alternates[0].icao_code}} CHECKED {% endif %}
+   {% if alternates|length > 0 %}
+   {% set alt1 = alternates[0] %}AL1 {{alt1.iata_code}}/{{alt1.icao_code}} CHECKED {% endif %}
    DES {{data.destination.iata_code}}/{{data.destination.icao_code}} CHECKED
-   {% if alternates|length > 1 %}AL2 {{alternates[1].iata_code}}/{{alternates[1].icao_code}} CHECKED {% endif %}
+   {% if alternates|length > 1 %}
+   {% set alt2 = alternates[1] %}AL2 {{alt2.iata_code}}/{{alt2.icao_code}} CHECKED {% endif %}
 4. NOTAM AND/OR AERONAUTICAL INFORMATION ALL NOTAMS SIGNIFICANT TO FLIGHT ARE CONSIDERED
 5. LOAD EST PAX ADL{{php_str_pad(data.weights.pax_count,3,'0','left')}}/CHD000/INF000 TOTAL {{data.weights.pax_count}}
    EST CGO {{data.weights.cargo}} KGS   EST PLD {{data.weights.payload}} KGS
@@ -440,7 +358,9 @@ VALID U/I {{php_date('Hi', (data.times.sched_out|int) + 21600)}}Z  REF PLAN {{da
    EZF {{php_str_pad(data.weights.est_zfw, 6, '0', 'left')}} MAX {{php_str_pad(data.weights.max_zfw, 6, '0', 'left')}}
    RES {{php_str_pad(data.fuel.reserve, 6, '0', 'left')}} KGS  {{php_date('H:i',data.times.reserve_time)}}
    ELW {{php_str_pad(data.weights.est_ldw, 6, '0', 'left')}} MAX {{php_str_pad(data.weights.max_ldw, 6, '0', 'left')}}
-   {% if alternates|length > 0 %}ALT {{php_str_pad(data.fuel.alternate_burn, 6, '0', 'left')}} KGS  {{php_date('H:i',alternates[0].burn)}}
+   {% if alternates|length > 0 %}
+   {% set alt1 = alternates[0] %}
+   ALT {{php_str_pad(data.fuel.alternate_burn, 6, '0', 'left')}} KGS  {{php_date('H:i',alt1.burn)}}
    ETW {{php_str_pad(data.weights.est_tow, 6, '0', 'left')}} MAX {{php_str_pad(data.weights.max_tow, 6, '0', 'left')}}{% endif %}
    BLK {{php_str_pad(data.fuel.plan_ramp, 6, '0', 'left')}} KGS  {{php_date('H:i',data.times.endurance)}}
 7. ETOPS FLIGHT: {% if not data.etops or data.etops == '0' %} NO {% else %} YES ETOPS DIVERSION TIME: {{data.etops.rule}} MIN {% endif %}
@@ -497,10 +417,8 @@ AWY     WAYPOINT  LAT/LON     ALT   WIND   OAT  FREQ   TAS  GSPD  DIST  REM
     {% if data.navlog and data.navlog.fix %}
     {% for f in data.navlog.fix %}
     <div class="nav-row">
-    <pre>
-{{php_str_pad(f.awid,7,' ','right')}} {{php_str_pad(f.ident,9,' ','right')}} {{helper.formatLatLon(f.pos_lat, f.pos_lon)}}  {{php_str_pad(f.altitude,5)}} {{f.wind_dir:03d}}/{{f.wind_spd:03d}} {{helper.formatOat(f.oat)}} -----  {{f.tas:03d}}  {{f.gs:03d}}  {{php_str_pad(f.distance,4)}}  {{php_str_pad(f.distance_remaining,4)}}
-        .../...   .../...     {{php_date('H:i', f.time_egt|int)}}  ...:...  ...  {{php_str_pad(f.fuel_remaining,5)}} .../... ...   ...   .....
-    </pre>
+    <pre>{{php_str_pad(f.awid,7,' ','right')}} {{php_str_pad(f.ident,9,' ','right')}} {{helper.formatLatLon(f.pos_lat, f.pos_lon)}}  {{php_str_pad(f.altitude,5)}} {{f.wind_dir:03d}}/{{f.wind_spd:03d}} {{helper.formatOat(f.oat)}} -----  {{f.tas:03d}}  {{f.gs:03d}}  {{php_str_pad(f.distance,4)}}  {{php_str_pad(f.distance_remaining,4)}}
+        .../...   .../...     {{php_date('H:i', f.time_egt|int)}}  ...:...  ...  {{php_str_pad(f.fuel_remaining,5)}} .../... ...   ...   .....</pre>
     </div>
     {% endfor %}
     {% endif %}
@@ -569,13 +487,12 @@ IDENT   FL100     FL180     FL240     FL300     FL340     FL390     FL450
     </div>
     {% endfor %}
     {% endif %}
-
 </body>
 </html>
 """
 
 # ---------------------------------------------------------
-# MAIN INTERFACE DISPATCH PORTAL (DASHBOARD)
+# MAIN INTERFACE PORTAL (DASHBOARD)
 # ---------------------------------------------------------
 def dashboard():
     st.markdown("""
@@ -585,7 +502,6 @@ def dashboard():
     </style>
     """, unsafe_allow_html=True)
     
-    # Extract query context parameters passed by the PHP network endpoint (?username=...)
     query_params = st.query_params
     sb_username_url = query_params.get("username", "")
 
@@ -595,10 +511,7 @@ def dashboard():
     logo_path = "FDCGA.png"
     logo_base64 = get_image_base64(logo_path)
 
-    # Context autofills the entry block safely
     sb_userid = st.text_input("SimBrief Username / User ID Account Input:", value=sb_username_url)
-    
-    # Layout rendering anchor container guarantees download UI elements display correctly outside closures
     download_placeholder = st.container()
     
     if sb_userid:
@@ -622,7 +535,6 @@ def dashboard():
 
         with st.spinner("⚙️ Transforming payload context data maps and generating layout rules..."):
             try:
-                # 1. STRUCTURAL DATA MUTATIONS
                 data_obj = dict_to_obj(data_json)
                 
                 raw_alternates = data_obj.get('alternate', [])
@@ -646,28 +558,24 @@ def dashboard():
                 airport_info = []
                 weather_info = []
 
-                # Departure Info Mapping
                 try:
                     t_val = php_date('Hi', data_obj.times.sched_out) + "Z"
                     airport_info.append({'icao': data_obj.origin.icao_code, 'iata': data_obj.origin.iata_code, 'label': 'STD', 'time': t_val, 'notams': get_filtered_notams(data_obj.origin.get('notam')), 'taf': data_obj.origin.get('taf', 'N/A')})
                     weather_info.append({'title': f"DEPARTURE AIRPORT : {data_obj.origin.icao_code}", 'data': (data_obj.origin.get('taf', '') or "") + "\n" + (data_obj.origin.get('metar', '') or "")})
                 except: pass
 
-                # Destination Info Mapping
                 try:
                     t_val = php_date('Hi', data_obj.times.est_in) + "Z"
                     airport_info.append({'icao': data_obj.destination.icao_code, 'iata': data_obj.destination.iata_code, 'label': 'ETA', 'time': t_val, 'notams': get_filtered_notams(data_obj.destination.get('notam')), 'taf': data_obj.destination.get('taf', 'N/A')})
                     weather_info.append({'title': f"DESTINATION AIRPORT : {data_obj.destination.icao_code}", 'data': (data_obj.destination.get('taf', '') or "") + "\n" + (data_obj.destination.get('metar', '') or "")})
                 except: pass
 
-                # Diversion Airports Loops
                 for alt in alternates_list:
                     try: t_val = php_date('Hi', int(data_obj.times.est_in) + int(alt.ete)) + "Z"
                     except: t_val = "...."
                     airport_info.append({'icao': alt.icao_code, 'iata': alt.iata_code, 'label': 'ETA (ALTN)', 'time': t_val, 'notams': get_filtered_notams(alt.get('notam')), 'taf': alt.get('taf', 'N/A')})
                     weather_info.append({'title': f"DESTINATION ALTERNATE AIRPORT : {alt.icao_code}", 'data': (alt.get('taf', '') or "") + "\n" + (alt.get('metar', '') or "")})
 
-                # Extended Twin Engine Ops (ETOPS Verification)
                 etops_apts_list = []
                 if data_obj.get('etops') and 'suitable_airport' in data_obj.etops:
                     etops_apts = data_obj.etops.suitable_airport
@@ -679,7 +587,6 @@ def dashboard():
                         if not wx_data.strip(): wx_data = "WEATHER DATA NOT AVAILABLE IN JSON"
                         weather_info.append({'title': f"ENROUTE ALTERNATE AIRPORT : {apt.icao_code}", 'data': wx_data})
 
-                # Aeronautical NOTAM Records Filter
                 notam_groups = []
                 notam_groups.append({'title': f"DEPARTURE AIRPORT : {data_obj.origin.icao_code}", 'notams': data_obj.origin.get('notam', [])})
                 notam_groups.append({'title': f"DESTINATION AIRPORT : {data_obj.destination.icao_code}", 'notams': data_obj.destination.get('notam', [])})
@@ -716,7 +623,6 @@ def dashboard():
                     foo_id = 1000 + (hash_int % 9000)
                 except: foo_id = 1234
                 
-                # 2. RUNTIME GRAPHICS COMPILATION & TEMPLATE INJECTION
                 env = Environment(loader=BaseLoader(), extensions=['jinja2.ext.loopcontrols'])
                 env.globals.update({
                     'php_date': php_date, 'php_str_pad': php_str_pad, 'php_wordwrap': php_wordwrap,
@@ -729,11 +635,9 @@ def dashboard():
                 template = env.from_string(template_str)
                 rendered_html = template.render(data=data_obj, airport_info=airport_info, alternates=alternates_list, notam_groups=notam_groups, weather_info=weather_info, map_images=map_images)
                 
-                # Generate exact PDF file buffer binary stream via WeasyPrint engine
                 pdf_buffer = io.BytesIO()
                 HTML(string=rendered_html).write_pdf(pdf_buffer)
                 
-                # 3. STREAM INTERACTIVE UI CONTAINER COMPONENT
                 with download_placeholder:
                     st.success("✅ Operational Briefing Package processed successfully!")
                     pdf_filename = f"GIA{data_obj.general.flight_number}_Briefing_Final.pdf"
