@@ -1094,16 +1094,19 @@ REQUEST NO. {{data.params.request_id[-5:]}} / REV NBR {{data.general.release}}
                     type="primary"
                 )
                 
-                # --- ADD THIS TO RENDER THE INTERACTIVE PDF ON SCREEN ---
+                # --- NATIVE PDF PREVIEW RENDERING ENGINE ---
                 st.markdown("### 📄 Flight Plan PDF Preview")
+                
+                # Mengonversi binary data PDF ke base64 string
                 base64_pdf = base64.b64encode(pdf_buffer.getvalue()).decode('utf-8')
+                
+                # Menggunakan HTML Object dan Embed Tag agar browser merender PDF reader aslinya secara penuh
                 pdf_display = f"""
                 <object data="data:application/pdf;base64,{base64_pdf}" type="application/pdf" width="100%" height="1000px">
                     <embed src="data:application/pdf;base64,{base64_pdf}" type="application/pdf" />
                 </object>
                 """
                 st.markdown(pdf_display, unsafe_allow_html=True)
-                # ------------------------------------------------
                 
             except Exception as e:
                 st.error(f"❌ Terjadi kesalahan saat memproses data/PDF: {e}")
