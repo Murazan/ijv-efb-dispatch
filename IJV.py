@@ -13,7 +13,7 @@ from weasyprint import HTML
 # ---------------------------------------------------------
 # KONFIGURASI HALAMAN (Harus dipanggil paling awal)
 # ---------------------------------------------------------
-st.set_page_config(page_title="IJV Crew Portal", page_icon="✈️", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="IJV Crew Portal", page_icon="IJV.png", layout="wide", initial_sidebar_state="collapsed")
 
 # ---------------------------------------------------------
 # KELAS & FUNGSI HELPER
@@ -328,7 +328,7 @@ def dashboard():
     st.title("OFP & Briefing Package Generator")
     
     # Membaca Logo untuk Template PDF (FDCGA.png)
-    logo_path = "FDCGA.png"
+    logo_path = "IJV.png"
     logo_base64 = get_image_base64(logo_path)
 
     # 1. Grab parameter from URL
