@@ -1090,26 +1090,31 @@ REQUEST NO. {{data.params.request_id[-5:]}} / REV NBR {{data.general.release}}
                 
                 # --- FIXED NATIVE PDF VIEWER COMPONENT ---
                 # --- ALTERNATIVE 1: COMPONENT BINARY BLOB VIEWER ---
+# --- ALTERNATIVE 2: FULL WEB TAB VIEWER ---
                 st.markdown("### 📄 Flight Plan PDF Preview")
                 
-                # Get the binary PDF data from the buffer
-                pdf_data = pdf_buffer.getvalue()
+                # Convert the buffer to a web-linkable string object
+                base64_pdf = base64.b64encode(pdf_buffer.getvalue()).decode('utf-8')
+                pdf_url = f"data:application/pdf;base64,{base64_pdf}"
                 
-                # Convert binary data to base64 string
-                base64_pdf = base64.b64encode(pdf_data).decode('utf-8')
-                
-                # Use standard HTML5 object tag with an embedded fallback string
-                pdf_display = f"""
-                <object data="data:application/pdf;base64,{base64_pdf}" type="application/pdf" width="100%" height="1000px">
-                    <p style="text-align: center; padding: 20px;">
-                        Your browser does not support viewing PDFs inline. 
-                        Please use the download button above to view your flight plan.
-                    </p>
-                </object>
+                # Inject a custom CSS styled link that acts like a browser tab redirect
+                link_html = f"""
+                <a href="{pdf_url}" target="_blank" style="
+                    display: block;
+                    text-align: center;
+                    background-color: #4CAF50;
+                    color: white;
+                    padding: 14px 20px;
+                    margin: 10px 0;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    text-decoration: none;
+                    font-weight: bold;
+                    font-size: 16px;
+                ">🖥️ Open PDF Preview in New Full-Screen Tab</a>
                 """
-                
-                # Render using Streamlit's raw HTML handler instead of a nested iframe string
-                st.markdown(pdf_display, unsafe_allow_html=True)
+                st.markdown(link_html, unsafe_allow_html=True)
                 
             except Exception as e:
                 st.error(f"❌ Terjadi kesalahan saat memproses data/PDF: {e}")
