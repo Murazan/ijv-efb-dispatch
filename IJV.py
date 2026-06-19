@@ -325,33 +325,27 @@ def dashboard():
         st.session_state['logged_in'] = False
         st.rerun()
 
-    st.title("OFP & Briefing Package Generator")
+st.title("OFP & Briefing Package Generator")
     
     # Membaca Logo untuk Template PDF (FDCGA.png)
     logo_path = "FDCGA.png"
     logo_base64 = get_image_base64(logo_path)
 
-    # 1. AMBIL PARAMETER USERNAME DARI URL PHP REDIRECT
+    # 1. Grab parameter from URL
     url_username = st.query_params.get("username", "")
-
-    # 2. ISI OTOMATIS INPUT FIELD JIKA ADA PARAMETER URL
+    
+    # 2. Swap field to read Username and assign the URL parameter as its default value
     sb_userid = st.text_input("Masukkan SimBrief Username:", value=url_username)
     
-    # 3. AUTO-RUN TRIGGER JIKA USERNAME DIKIRIM DARI PHP
-    # Menggunakan session_state agar auto-run tidak masuk ke dalam infinite loop penyegaran halaman
-    if "auto_generated" not in st.session_state:
-        st.session_state["auto_generated"] = False
-
-    # Jika ada parameter username dari URL dan kita belum pernah melakukan auto-generate di sesi ini
-    if url_username and not st.session_state["auto_generated"]:
-        st.session_state["auto_generated"] = True
-        st.rerun() # Memicu pembuatan ulang instan untuk menjalankan logika unduhan di bawah secara langsung
+    # 3. Create the layout button
+    trigger_generation = st.button("Generate Flight Plan PDF")
     
-    if st.button("Generate Flight Plan PDF"):
-        if not sb_userid:
-            st.warning("Silakan masukkan SimBrief User ID terlebih dahulu.")
-            return
-            
+    # 4. AUTO-RUN SWITCH: If a URL user is detected and we haven't processed them yet, force-trigger execution
+    if url_username and "auto_run_executed" not in st.session_state:
+        st.session_state["auto_run_executed"] = True
+        trigger_generation = True
+
+    if trigger_generation:
             
         with st.spinner(f"⏳ Mengunduh data dari SimBrief (Username: {sb_userid})..."):
             # Update 'userid=' menjadi 'username=' agar API SimBrief mencocokkan string dengan benar
@@ -1094,19 +1088,15 @@ REQUEST NO. {{data.params.request_id[-5:]}} / REV NBR {{data.general.release}}
                     type="primary"
                 )
                 
-                # --- NATIVE PDF PREVIEW RENDERING ENGINE ---
+                # --- FIXED NATIVE PDF VIEWER COMPONENT ---
                 st.markdown("### 📄 Flight Plan PDF Preview")
                 
-                # Mengonversi binary data PDF ke base64 string
+                # Encode binary to clean base64 string
                 base64_pdf = base64.b64encode(pdf_buffer.getvalue()).decode('utf-8')
                 
-                # Menggunakan HTML Object dan Embed Tag agar browser merender PDF reader aslinya secara penuh
-                pdf_display = f"""
-                <object data="data:application/pdf;base64,{base64_pdf}" type="application/pdf" width="100%" height="1000px">
-                    <embed src="data:application/pdf;base64,{base64_pdf}" type="application/pdf" />
-                </object>
-                """
-                st.markdown(pdf_display, unsafe_allow_html=True)
+                # Wrap inside a sandboxed Streamlit component to bypass browser security blocks
+                pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="1000px" style="border:none;"></iframe>'
+                st.components.v1.html(pdf_display, height=1000, scrolling=True)
                 
             except Exception as e:
                 st.error(f"❌ Terjadi kesalahan saat memproses data/PDF: {e}")
@@ -1115,7 +1105,11 @@ REQUEST NO. {{data.params.request_id[-5:]}} / REV NBR {{data.general.release}}
 # ROUTING APLIKASI & INTERNET URL PAYLOADS DARI PHP
 # ---------------------------------------------------------
 # Cek parameter URL '?username=...' dari Web PHP utama
-if "username" in st.query_params and not st.session_state['logged_in']:
+# ---------------------------------------------------------
+# ROUTING APLIKASI (UPDATED FOR INSTANT PHP REDIRECT)
+# ---------------------------------------------------------
+# Intercept parameter URL immediately upon runtime before rendering any pages
+if "username" in st.query_params:
     st.session_state['logged_in'] = True
     st.session_state['username'] = st.query_params["username"]
 
