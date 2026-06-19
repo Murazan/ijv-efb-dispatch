@@ -44,11 +44,19 @@ def dict_to_obj(d):
     return d
 
 def php_date(fmt, timestamp):
-    if not timestamp or int(timestamp) == 0:
+    if not timestamp or str(timestamp).strip() in ["0", ""]:
         return ""
     try:
-        ts = int(timestamp)
-        dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+        # Check if the timestamp is an ISO format string (contains 'T' or '-')
+        if isinstance(timestamp, str) and ('T' in timestamp or '-' in timestamp):
+            # Clean up the string representation trailing 'Z' if present
+            clean_ts = timestamp.replace('Z', '+00:00')
+            dt = datetime.fromisoformat(clean_ts)
+        else:
+            # Fall back to standard epoch integer timestamp parsing
+            ts = int(float(timestamp))
+            dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+            
         if fmt == 'd': return dt.strftime('%d')
         if fmt == 'm': return dt.strftime('%m')
         if fmt == 'y': return dt.strftime('%y')
