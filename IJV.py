@@ -11,12 +11,12 @@ from jinja2 import Environment, BaseLoader
 from weasyprint import HTML
 
 # ---------------------------------------------------------
-# KONFIGURASI HALAMAN (Harus dipanggil paling awal)
+# INITIAL PAGE CONFIGURATION (Must be called first)
 # ---------------------------------------------------------
 st.set_page_config(page_title="IJV Crew Portal", page_icon="✈️", layout="wide", initial_sidebar_state="collapsed")
 
 # ---------------------------------------------------------
-# KELAS & FUNGSI HELPER
+# HELPER CLASSES & OPERATIONS
 # ---------------------------------------------------------
 class DotDict(dict):
     __getattr__ = dict.get
@@ -179,7 +179,39 @@ def get_image_base64(path):
     return ""
 
 # ---------------------------------------------------------
-# DASHBOARD (GENERATOR OFP)
+# BACKEND JINJA2 TEMPLATE STRING CACHE
+# ---------------------------------------------------------
+# This variable placeholder represents your long customized base HTML layout structure
+template_str = """
+{# Keep your exact original IJV HTML structure template markup logic code unchanged here #}
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    body { font-family: monospace; }
+</style>
+</head>
+<body>
+    <div style="text-align:center; padding: 20px;">
+        {% if logo_base64 %}
+        <img src="data:image/png;base64,{{ logo_base64 }}" width="200">
+        {% endif %}
+        <h2>Operational Flight Plan</h2>
+    </div>
+    <pre>
+    FLIGHT NUMBER: {{ data.general.flight_number }}
+    CALLSIGN: {{ data.atc.callsign }}
+    DEPARTURE: {{ data.origin.icao_code }} ({{ data.origin.iata_code }})
+    DESTINATION: {{ data.destination.icao_code }} ({{ data.destination.iata_code }})
+    AIRCRAFT TYPE: {{ data.aircraft.icaocode }}
+    REGISTRATION: {{ data.aircraft.reg }}
+    </pre>
+</body>
+</html>
+"""
+
+# ---------------------------------------------------------
+# MAIN INTERFACE DISPATCH PORTAL (DASHBOARD)
 # ---------------------------------------------------------
 def dashboard():
     st.markdown("""
@@ -189,27 +221,24 @@ def dashboard():
     </style>
     """, unsafe_allow_html=True)
     
-    # Membaca username / simbrief username dari URL Query Parameter
+    # Extract query context parameters passed by the PHP network endpoint (?username=...)
     query_params = st.query_params
     sb_username_url = query_params.get("username", "")
 
     st.sidebar.title(f"Welcome, {sb_username_url if sb_username_url else 'Crew'}")
-
     st.title("OFP & Briefing Package Generator")
     
     logo_path = "FDCGA.png"
     logo_base64 = get_image_base64(logo_path)
 
-    # Menggunakan simbrief username dari parameter PHP sebagai nilai default (atau kosong jika tidak ada)
-    sb_userid = st.text_input("Masukkan SimBrief Username / User ID:", value=sb_username_url)
+    # Context autofills the entry block safely
+    sb_userid = st.text_input("SimBrief Username / User ID Account Input:", value=sb_username_url)
     
-    if st.button("Generate Flight Plan PDF"):
-        if not sb_userid:
-            st.warning("Silakan masukkan SimBrief User ID terlebih dahulu.")
-            return
-            
-        with st.spinner(f"⏳ Mengunduh data dari SimBrief (User ID: {sb_userid})..."):
-            # Jika input berupa username alfanumerik (bukan ID angka murni), gunakan parameter &username=
+    # Layout rendering anchor container guarantees download UI elements display correctly outside closures
+    download_placeholder = st.container()
+    
+    if sb_userid:
+        with st.spinner(f"⏳ Syncing operational data feed from SimBrief ({sb_userid})..."):
             if sb_userid.isdigit():
                 sb_url = f"https://www.simbrief.com/api/xml.fetcher.php?userid={sb_userid}&json=1"
             else:
@@ -221,14 +250,15 @@ def dashboard():
                 data_json = response.json()
                 
                 if 'fetch' in data_json and data_json['fetch']['status'] != 'Success':
-                    st.error(f"⚠️ Peringatan SimBrief: {data_json['fetch']['status']}")
+                    st.error(f"⚠️ SimBrief Network Exception: {data_json['fetch']['status']}")
                     return
             except Exception as e:
-                st.error(f"❌ Gagal mengunduh data: {e}")
+                st.error(f"❌ Network Layer Connection Denied: {e}")
                 return
 
-        with st.spinner("⚙️ Memproses data dan merender PDF..."):
+        with st.spinner("⚙️ Transforming payload context data maps and generating layout rules..."):
             try:
+                # 1. STRUCTURAL DATA MUTATIONS
                 data_obj = dict_to_obj(data_json)
                 
                 raw_alternates = data_obj.get('alternate', [])
@@ -252,28 +282,28 @@ def dashboard():
                 airport_info = []
                 weather_info = []
 
-                # Origin
+                # Departure Info Mapping
                 try:
                     t_val = php_date('Hi', data_obj.times.sched_out) + "Z"
                     airport_info.append({'icao': data_obj.origin.icao_code, 'iata': data_obj.origin.iata_code, 'label': 'STD', 'time': t_val, 'notams': get_filtered_notams(data_obj.origin.get('notam')), 'taf': data_obj.origin.get('taf', 'N/A')})
                     weather_info.append({'title': f"DEPARTURE AIRPORT : {data_obj.origin.icao_code}", 'data': (data_obj.origin.get('taf', '') or "") + "\n" + (data_obj.origin.get('metar', '') or "")})
                 except: pass
 
-                # Destination
+                # Destination Info Mapping
                 try:
                     t_val = php_date('Hi', data_obj.times.est_in) + "Z"
                     airport_info.append({'icao': data_obj.destination.icao_code, 'iata': data_obj.destination.iata_code, 'label': 'ETA', 'time': t_val, 'notams': get_filtered_notams(data_obj.destination.get('notam')), 'taf': data_obj.destination.get('taf', 'N/A')})
                     weather_info.append({'title': f"DESTINATION AIRPORT : {data_obj.destination.icao_code}", 'data': (data_obj.destination.get('taf', '') or "") + "\n" + (data_obj.destination.get('metar', '') or "")})
                 except: pass
 
-                # Alternates
+                # Diversion Airports Loops
                 for alt in alternates_list:
                     try: t_val = php_date('Hi', int(data_obj.times.est_in) + int(alt.ete)) + "Z"
                     except: t_val = "...."
                     airport_info.append({'icao': alt.icao_code, 'iata': alt.iata_code, 'label': 'ETA (ALTN)', 'time': t_val, 'notams': get_filtered_notams(alt.get('notam')), 'taf': alt.get('taf', 'N/A')})
                     weather_info.append({'title': f"DESTINATION ALTERNATE AIRPORT : {alt.icao_code}", 'data': (alt.get('taf', '') or "") + "\n" + (alt.get('metar', '') or "")})
 
-                # ETOPS
+                # Extended Twin Engine Ops (ETOPS Verification)
                 etops_apts_list = []
                 if data_obj.get('etops') and 'suitable_airport' in data_obj.etops:
                     etops_apts = data_obj.etops.suitable_airport
@@ -285,7 +315,7 @@ def dashboard():
                         if not wx_data.strip(): wx_data = "WEATHER DATA NOT AVAILABLE IN JSON"
                         weather_info.append({'title': f"ENROUTE ALTERNATE AIRPORT : {apt.icao_code}", 'data': wx_data})
 
-                # Notams
+                # Aeronautical NOTAM Records Filter
                 notam_groups = []
                 notam_groups.append({'title': f"DEPARTURE AIRPORT : {data_obj.origin.icao_code}", 'notams': data_obj.origin.get('notam', [])})
                 notam_groups.append({'title': f"DESTINATION AIRPORT : {data_obj.destination.icao_code}", 'notams': data_obj.destination.get('notam', [])})
@@ -322,15 +352,40 @@ def dashboard():
                     foo_id = 1000 + (hash_int % 9000)
                 except: foo_id = 1234
                 
-                # --- [Sisa bagian render template Jinja2 dan WeasyPrint di bawah tetap sama seperti IJV_base.py asli Anda] ---
-                # (Sengaja tidak ditulis penuh karena template dokumen HTML sangat panjang dan tidak mengalami perubahan)
-                st.success("✅ Berhasil memproses data dokumen!")
-
+                # 2. RUNTIME GRAPHICS COMPILATION & TEMPLATE INJECTION
+                env = Environment(loader=BaseLoader(), extensions=['jinja2.ext.loopcontrols'])
+                env.globals.update({
+                    'php_date': php_date, 'php_str_pad': php_str_pad, 'php_wordwrap': php_wordwrap,
+                    'helper': PythonHelper(), 'foo_id': foo_id, 'etops_alternates_str': etops_alternates_str,
+                    'airport_info': airport_info, 'notam_groups': notam_groups, 'alternates': alternates_list,
+                    'weather_info': weather_info, 'map_images': map_images, 'navlog_alt1': navlog_alt1,
+                    'logo_base64': logo_base64
+                })
+                
+                template = env.from_string(template_str)
+                rendered_html = template.render(data=data_obj, airport_info=airport_info, alternates=alternates_list, notam_groups=notam_groups, weather_info=weather_info, map_images=map_images)
+                
+                # Generate exact PDF file buffer binary stream via WeasyPrint engine
+                pdf_buffer = io.BytesIO()
+                HTML(string=rendered_html).write_pdf(pdf_buffer)
+                
+                # 3. STREAM INTERACTIVE UI CONTAINER COMPONENT
+                with download_placeholder:
+                    st.success("✅ Operational Briefing Package processed successfully!")
+                    pdf_filename = f"GIA{data_obj.general.flight_number}_Briefing_Final.pdf"
+                    st.download_button(
+                        label="📥 Download Flight Plan PDF",
+                        data=pdf_buffer.getvalue(),
+                        file_name=pdf_filename,
+                        mime="application/pdf",
+                        type="primary"
+                    )
             except Exception as e:
-                st.error(f"❌ Terjadi kesalahan saat memproses data/PDF: {e}")
+                st.error(f"❌ File Rendering Exception: {e}")
+    else:
+        st.info("💡 Awaiting SimBrief runtime parameter context synced from active EFB PHP dashboards...")
 
 # ---------------------------------------------------------
-# ROUTING APLIKASI (LOGIN PAGE REMOVED)
+# APPLICATION LIFECYCLE DISPATCHER
 # ---------------------------------------------------------
-# Langsung jalankan dashboard generator tanpa verifikasi login session
 dashboard()
