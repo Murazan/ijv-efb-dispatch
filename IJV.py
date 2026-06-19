@@ -325,7 +325,7 @@ def dashboard():
         st.session_state['logged_in'] = False
         st.rerun()
 
-st.title("OFP & Briefing Package Generator")
+    st.title("OFP & Briefing Package Generator")
     
     # Membaca Logo untuk Template PDF (FDCGA.png)
     logo_path = "FDCGA.png"
