@@ -319,22 +319,23 @@ def dashboard():
         header[data-testid="stHeader"] { visibility: visible !important; }
     </style>
     """, unsafe_allow_html=True)
-    
+
     st.sidebar.title(f"Welcome, {st.session_state.get('username', 'Crew')}")
     if st.sidebar.button("Logout"):
         st.session_state['logged_in'] = False
-        # Clear out URL payload parameters upon manual logout
-        st.query_params.clear()
         st.rerun()
 
     st.title("OFP & Briefing Package Generator")
-    
+
+    # --- ADD THIS LINE TO CATCH THE PARAMETER FROM THE EFB ---
+    default_user = st.query_params.get("username", "")
+
     # Membaca Logo untuk Template PDF (FDCGA.png)
     logo_path = "FDCGA.png"
     logo_base64 = get_image_base64(logo_path)
 
-    # KOTAK INPUT SIMBRIEF ID
-    sb_userid = st.text_input("Masukkan SimBrief User ID:", value="")
+    # UPDATE VALUE PARAMETER TO default_user
+    sb_userid = st.text_input("Masukkan SimBrief Username:", value=default_user)
     
     if st.button("Generate Flight Plan PDF"):
         if not sb_userid:
@@ -342,7 +343,7 @@ def dashboard():
             return
             
         with st.spinner(f"⏳ Mengunduh data dari SimBrief (User ID: {sb_userid})..."):
-            sb_url = f"https://www.simbrief.com/api/xml.fetcher.php?userid={sb_userid}&json=1"
+        sb_url = f"https://www.simbrief.com/api/xml.fetcher.php?username={sb_userid}&json=1"
             try:
                 response = requests.get(sb_url, timeout=15)
                 response.raise_for_status()
