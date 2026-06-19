@@ -722,10 +722,21 @@ if target_username:
     ]
     
     # Process Flight Log (Navlog) Data Rows
+# Process Flight Log (Navlog) Data Rows safely
     navlog_rows = []
     total_dist_cum = 0
-    fixes = raw_json['navlog'].get('fix', [])
-    if isinstance(fixes, dict): fixes = [fixes]
+    
+    # Check if navlog is already a direct list of fixes, or a dict containing 'fix'
+    navlog_data = raw_json.get('navlog', [])
+    if isinstance(navlog_data, list):
+        fixes = navlog_data
+    elif isinstance(navlog_data, dict):
+        fixes = navlog_data.get('fix', [])
+    else:
+        fixes = []
+        
+    if isinstance(fixes, dict): 
+        fixes = [fixes]
     
     for f in fixes:
         total_dist_cum += int(f.get('distance', 0))
