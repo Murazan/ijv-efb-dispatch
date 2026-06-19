@@ -319,23 +319,33 @@ def dashboard():
         header[data-testid="stHeader"] { visibility: visible !important; }
     </style>
     """, unsafe_allow_html=True)
-
+    
     st.sidebar.title(f"Welcome, {st.session_state.get('username', 'Crew')}")
     if st.sidebar.button("Logout"):
         st.session_state['logged_in'] = False
         st.rerun()
 
     st.title("OFP & Briefing Package Generator")
-
-    # --- ADD THIS LINE TO CATCH THE PARAMETER FROM THE EFB ---
-    default_user = st.query_params.get("username", "")
-
+    
     # Membaca Logo untuk Template PDF (FDCGA.png)
     logo_path = "FDCGA.png"
     logo_base64 = get_image_base64(logo_path)
 
-    # UPDATE VALUE PARAMETER TO default_user
-    sb_userid = st.text_input("Masukkan SimBrief Username:", value=default_user)
+    # 1. AMBIL PARAMETER USERNAME DARI URL PHP REDIRECT
+    url_username = st.query_params.get("username", "")
+
+    # 2. ISI OTOMATIS INPUT FIELD JIKA ADA PARAMETER URL
+    sb_userid = st.text_input("Masukkan SimBrief Username:", value=url_username)
+    
+    # 3. AUTO-RUN TRIGGER JIKA USERNAME DIKIRIM DARI PHP
+    # Menggunakan session_state agar auto-run tidak masuk ke dalam infinite loop penyegaran halaman
+    if "auto_generated" not in st.session_state:
+        st.session_state["auto_generated"] = False
+
+    # Jika ada parameter username dari URL dan kita belum pernah melakukan auto-generate di sesi ini
+    if url_username and not st.session_state["auto_generated"]:
+        st.session_state["auto_generated"] = True
+        st.rerun() # Memicu pembuatan ulang instan untuk menjalankan logika unduhan di bawah secara langsung
     
     if st.button("Generate Flight Plan PDF"):
         if not sb_userid:
