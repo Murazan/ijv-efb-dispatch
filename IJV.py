@@ -328,13 +328,10 @@ PAX : {{data.weights.pax_count}}   CARGO : {{data.weights.cargo}}   PAYLOAD : {{
     <div class="footer-box">
         <b>Flight Dispatch Center</b><br>
         Operation Center II Building 3rd Floor | Garuda City | Soekarno-Hatta International Airport<br>
-        Cengkareng 19120, Indonesia<br>
     </div>
     
     <div class="page-break"></div>
 
-    {% set req_id_truncated = data.params.request_id|string %}
-    {% set req_slice = req_id_truncated[-5:] if req_id_truncated|length >= 5 else req_id_truncated %}
     <pre>
 ---------------------------------------------------------------------------
                             DISPATCH RELEASE
@@ -622,6 +619,10 @@ def dashboard():
                     hash_int = int(req_id[:8], 16) if req_id else 0
                     foo_id = 1000 + (hash_int % 9000)
                 except: foo_id = 1234
+
+                # PRE-CALCULATE TRUNCATED REFERENCE PLAN ID TO REMOVE COLONS FROM JINJA TAGS
+                req_id_str = str(data_obj.get('params', {}).get('request_id', ''))
+                req_slice = req_id_str[-5:] if len(req_id_str) >= 5 else req_id_str
                 
                 env = Environment(loader=BaseLoader(), extensions=['jinja2.ext.loopcontrols'])
                 env.globals.update({
@@ -629,7 +630,7 @@ def dashboard():
                     'helper': PythonHelper(), 'foo_id': foo_id, 'etops_alternates_str': etops_alternates_str,
                     'airport_info': airport_info, 'notam_groups': notam_groups, 'alternates': alternates_list,
                     'weather_info': weather_info, 'map_images': map_images, 'navlog_alt1': navlog_alt1,
-                    'logo_base64': logo_base64
+                    'logo_base64': logo_base64, 'req_slice': req_slice
                 })
                 
                 template = env.from_string(template_str)
