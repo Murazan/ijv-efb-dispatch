@@ -11,12 +11,12 @@ from jinja2 import Environment, BaseLoader
 from weasyprint import HTML
 
 # ---------------------------------------------------------
-# INITIAL PAGE CONFIGURATION (Must be called first)
+# KONFIGURASI HALAMAN (Harus dipanggil paling awal)
 # ---------------------------------------------------------
 st.set_page_config(page_title="IJV Crew Portal", page_icon="✈️", layout="wide", initial_sidebar_state="collapsed")
 
 # ---------------------------------------------------------
-# HELPER CLASSES & OPERATIONS
+# KELAS & FUNGSI HELPER
 # ---------------------------------------------------------
 class DotDict(dict):
     __getattr__ = dict.get
@@ -179,319 +179,10 @@ def get_image_base64(path):
     return ""
 
 # ---------------------------------------------------------
-# VALIDATED HTML JINJA2 LAYOUT TEMPLATE
+# DASHBOARD (GENERATOR OFP)
 # ---------------------------------------------------------
-template_str = """
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8"/>
-    <title>{{data.general.icao_airline}}-{{data.general.flight_number}}</title>
-    <style>
-        * { margin: 0; padding: 0; }
-        @page {
-            margin: 0.50cm 1.38cm 0.81cm 0.92cm;
-            size: A4;
-            font-family: Courier, monospace;
-        }
-        @page landscape-page {
-            size: A4 landscape;
-            margin: 0.5cm;
-            @bottom-right { content: "PAGE " counter(page) " OF " counter(pages); font-size: 8pt; font-family: Courier, monospace; color: #7D7D7D;}
-            @top-right { content: "PACKAGE GIA{{data.general.flight_number}}"; font-size: 8pt; font-family: Courier, monospace; color: #7D7D7D;}
-        }
-        body {
-            font-family: Courier, monospace;
-            font-size: 10.5pt;
-            line-height: 12pt;
-            margin: 0;
-        }
-        .header { position: fixed; top: -10px; left: 0; right: 0; text-align: right; font-size: 8pt; color: #7D7D7D; font-family: Courier, monospace; }
-        .footer { position: fixed; bottom: -20px; left: 0; right: 0; height: 20px; text-align: right; font-size: 8pt; color: #7D7D7D; font-family: Courier, monospace; }
-        .page-number:before { content: "BRIEFING TEXT {{data.general.icao_airline}}{{data.general.flight_number}}-{{php_date('d-m-y', data.times.sched_out)}}-{{php_date('Hi', data.times.sched_out)}}-{{data.origin.icao_code}} PAGE " counter(page) " OF " counter(pages); }
-        .page-number-footer:before { content: "PAGE " counter(page) " of " counter(pages); }
-        pre {
-            margin: 0;
-            white-space: pre-wrap;
-            font-family: Courier, monospace;
-            display: block;
-            font-size: 11pt;
-            line-height: 13.5pt;
-        }
-        .nw-container { width: 100%; border: 2px solid #000; margin-bottom: 5px; page-break-inside: avoid; }
-        .nw-header {
-            background-color: #ADD8E6;
-            border-bottom: 1px solid #000;
-            text-align: center;
-            font-weight: bold;
-            padding: 2px;
-            font-size: 11pt;
-            line-height: 1.2;
-        }
-        .nw-content { padding: 5px; font-size: 10.5pt; }
-        .section-title {
-            font-weight: bold;
-            text-decoration: underline;
-            display: block;
-            margin-bottom: 2px;
-            font-size: 10.5pt;
-        }
-        .footer-box {
-            border: 2px solid black;
-            border-radius: 15px;
-            padding: 10px;
-            text-align: center;
-            margin-top: 15px;
-            font-family: Courier, monospace;
-            font-size: 9pt;
-            page-break-inside: avoid;
-        }
-        .landscape-section { page: landscape-page; font-family: Courier, monospace; font-size: 10.5pt; }
-        .notam-header-landscape { text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 5px; width: 100%; }
-        .notam-columns { column-count: 2; column-gap: 1cm; column-rule: 1px solid #ccc; text-align: justify; }
-        .notam-group { break-inside: auto; margin-bottom: 15px; display: block; }
-        .notam-group-header { font-weight: bold; border-bottom: 1px solid black; margin-bottom: 5px; margin-top: 10px; font-size: 11pt; padding: 2px; }
-        .notam-item { margin-bottom: 12px; break-inside: avoid; }
-        .wx-header { text-align: center; font-weight: bold; margin-bottom: 20px; font-size: 12pt; }
-        .wx-section { margin-bottom: 20px; break-inside: avoid; }
-        .wx-airport-title { font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 2px; margin-bottom: 5px; font-family: Courier, monospace; }
-        .wx-data { font-family: Courier, monospace; font-size: 10.5pt; white-space: pre-wrap; }
-        .map-container { text-align: center; width: 100%; height: 100%; }
-        .map-title { font-weight: bold; font-size: 14pt; margin-bottom: 10px; text-align: center; }
-        .map-image { max-width: 100%; max-height: 17cm; object-fit: contain; border: 1px solid #000; }
-        .nav-row { white-space: pre-wrap; page-break-inside: avoid; display: block; }
-        .page-break { page-break-after: always; }
-    </style>
-</head>
-<body>
-    <div class="header"><div class="page-number"></div></div>
-    <div class="footer"><div class="page-number-footer"></div></div>
-    
-    <div style="text-align: center; margin-bottom: 15px;">
-        {% if logo_base64 %}
-        <img src="data:image/png;base64,{{logo_base64}}" style="max-height: 60px; width: auto;"><br>
-        {% endif %}
-        <span style="font-size: 15pt; font-family: Courier, monospace;">BRIEFING TEXT</span><br>
-        {{data.general.icao_airline}}{{data.general.flight_number}} {{data.origin.icao_code}}-{{data.destination.icao_code}} {{data.aircraft.reg}} {{php_date('d/m/y', data.times.sched_out)}}
-    </div>
-    
-    <pre>
-1. CREW ALERT
-NIL
-
-2. AIRCRAFT STATUS
-APU : SERVICEABLE
-HIL : NIL
-
-3. NOTAM & WEATHER
-    </pre>
-
-    {% for apt in airport_info %}
-    <div class="nw-container">
-        <div class="nw-header">
-            {{apt.icao}}/{{apt.iata}}<br>
-            {{apt.time}}
-        </div>
-        <div class="nw-content">
-            <span class="section-title">NOTAM:</span>
-            <pre style="margin:0; padding:0;">
-{% if apt.notams %}
-{%- for n in apt.notams -%}
-{{n.id}} {{n.text}}
-{%- if not loop.last -%}
-.
-{% endif %}
-{% endfor -%}
-{%- else -%}
-NO SIGNIFICANT NOTAM.
-{%- endif -%}
-            </pre>
-            <div style="border-top: 1px solid #000; margin: 5px 0;"></div>
-            <span class="section-title">FORECAST WEATHER:</span>
-            <pre style="margin:0;">{{apt.taf if apt.taf else 'REFER TO WX PKG'}}</pre>
-        </div>
-    </div>
-    {% endfor %}
-
-    <pre>
-4. SIGNIFICANT WX EN-ROUTE
-TYPHOON : NIL
-TURBULENCE : LIGHT
-JETSTREAM : PLEASE CHECK SIGWX
-CLOUDS : PLEASE CHECK SIGWX
-WIND COMP. : {{helper.formatAvgWindComp(data.general.avg_wind_comp)}}
-
-5. EST PAYLOAD
-PAX : {{data.weights.pax_count}}   CARGO : {{data.weights.cargo}}   PAYLOAD : {{data.weights.payload}} KGS
-    </pre>
-
-    <div class="footer-box">
-        <b>Flight Dispatch Center</b><br>
-        Operation Center II Building 3rd Floor | Garuda City | Soekarno-Hatta International Airport<br>
-    </div>
-    
-    <div class="page-break"></div>
-
-    <pre>
----------------------------------------------------------------------------
-                            DISPATCH RELEASE
----------------------------------------------------------------------------
-VALID U/I {{php_date('Hi', (data.times.sched_out|int) + 21600)}}Z  REF PLAN {{req_slice}} / REV NBR {{data.general.release}}
-{{data.atc.callsign}}  {{php_date('dMy',data.times.sched_out)}}  ETD {{php_date('Hi',data.times.sched_out)}}Z  ETA {{php_date('Hi',data.times.est_in)}}Z / FT {{php_date('Hi',data.times.est_block)}} IFR {{data.aircraft.reg}}
-
-1. POD/POA : {{data.origin.icao_code}}/{{data.destination.icao_code}}
-2. INITIAL DESTINATION (FOR PLANNED RE-DISPATCH AS APPLICABLE):
-3. WX ORG {{data.origin.iata_code}}/{{data.origin.icao_code}} CHECKED
-   {% if alternates|length > 0 %}
-   {% set alt1 = alternates[0] %}AL1 {{alt1.iata_code}}/{{alt1.icao_code}} CHECKED {% endif %}
-   DES {{data.destination.iata_code}}/{{data.destination.icao_code}} CHECKED
-   {% if alternates|length > 1 %}
-   {% set alt2 = alternates[1] %}AL2 {{alt2.iata_code}}/{{alt2.icao_code}} CHECKED {% endif %}
-4. NOTAM AND/OR AERONAUTICAL INFORMATION ALL NOTAMS SIGNIFICANT TO FLIGHT ARE CONSIDERED
-5. LOAD EST PAX ADL{{php_str_pad(data.weights.pax_count,3,'0','left')}}/CHD000/INF000 TOTAL {{data.weights.pax_count}}
-   EST CGO {{data.weights.cargo}} KGS   EST PLD {{data.weights.payload}} KGS
-6. FLIGHT PLAN DATA
-   TRP {{php_str_pad(data.fuel.enroute_burn, 6, '0', 'left')}} KGS  {{php_date('H:i',data.times.est_time_enroute)}}
-   EZF {{php_str_pad(data.weights.est_zfw, 6, '0', 'left')}} MAX {{php_str_pad(data.weights.max_zfw, 6, '0', 'left')}}
-   RES {{php_str_pad(data.fuel.reserve, 6, '0', 'left')}} KGS  {{php_date('H:i',data.times.reserve_time)}}
-   ELW {{php_str_pad(data.weights.est_ldw, 6, '0', 'left')}} MAX {{php_str_pad(data.weights.max_ldw, 6, '0', 'left')}}
-   {% if alternates|length > 0 %}
-   {% set alt1 = alternates[0] %}
-   ALT {{php_str_pad(data.fuel.alternate_burn, 6, '0', 'left')}} KGS  {{php_date('H:i',alt1.burn)}}
-   ETW {{php_str_pad(data.weights.est_tow, 6, '0', 'left')}} MAX {{php_str_pad(data.weights.max_tow, 6, '0', 'left')}}{% endif %}
-   BLK {{php_str_pad(data.fuel.plan_ramp, 6, '0', 'left')}} KGS  {{php_date('H:i',data.times.endurance)}}
-7. ETOPS FLIGHT: {% if not data.etops or data.etops == '0' %} NO {% else %} YES ETOPS DIVERSION TIME: {{data.etops.rule}} MIN {% endif %}
-8. ENROUTE / ETOPS ALTERNATE: {{etops_alternates_str}}
-9. TAKE OFF ALTERNATE (IF REQUIRED) : ......
-10. DESTINATION ALTERNATE: {% if alternates|length > 0 %}{{alternates[0].icao_code}}{% else %}NIL{% endif %}
-
-THIS OPERATIONAL FLIGHT PLAN COMPLIES WITH ALL CAR/CASR RULES AND APPLICABLE REQUIREMENTS.
-THE FLIGHT IS AUTHORIZED AND RELEASED.
-
-DISPATCHER SIGNATURE: ID #{{foo_id}}
-PIC SIGNATURE: .......................................
-    </pre>
-
-    <div class="page-break"></div>
-
-    <pre>
----------------------------------------------------------------------------
-                         OPERATIONAL FLIGHT PLAN
----------------------------------------------------------------------------
-{{data.general.icao_airline}}{{data.general.flight_number}} / {{data.atc.callsign}}  OFP NBR {{data.general.release}}  {{php_date('dMy',data.times.sched_out)}}
-ROUTE: {{data.general.route}}
-
----------------------------------------------------------------------------
-FUEL CALCULATION           WEIGHTS         FUEL    TIME
----------------------------------------------------------------------------
-MINIMUM TAKEOFF FUEL       EST ZFW  {{php_str_pad(data.weights.est_zfw,6)}}  TAXI    {{php_str_pad(data.fuel.taxi,5)}}  {{php_date('H:i',data.times.taxi)}}
-TRIP FUEL    {{php_str_pad(data.fuel.enroute_burn,6)}}     EST TOW  {{php_str_pad(data.weights.est_tow,6)}}  TRIP    {{php_str_pad(data.fuel.enroute_burn,5)}}  {{php_date('H:i',data.times.est_time_enroute)}}
-CONT 5%      {{php_str_pad(data.fuel.contingency,6)}}     EST LDW  {{php_str_pad(data.weights.est_ldw,6)}}  CONT    {{php_str_pad(data.fuel.contingency,5)}}  {{php_date('H:i',data.times.contingency_time)}}
-ALTN         {{php_str_pad(data.fuel.alternate_burn,6)}}                             ALTN    {{php_str_pad(data.fuel.alternate_burn,5)}}  {{php_date('H:i',data.times.alternate_time)}}
-HOLD/FINAL   {{php_str_pad(data.fuel.reserve,6)}}                             HOLD    {{php_str_pad(data.fuel.reserve,5)}}  {{php_date('H:i',data.times.reserve_time)}}
-MIN T/O FUEL {{php_str_pad(data.fuel.min_takeoff,6)}}                             MIN TO  {{php_str_pad(data.fuel.min_takeoff,5)}}  {{php_date('H:i',data.times.endurance)}}
-EXTRA/EXTRA  {{php_str_pad(data.fuel.extra,6)}}                             EXTRA   {{php_str_pad(data.fuel.extra,5)}}  {{php_date('H:i',data.times.extra_time)}}
-BLOCK FUEL   {{php_str_pad(data.fuel.plan_ramp,6)}}                             BLOCK   {{php_str_pad(data.fuel.plan_ramp,5)}}  {{php_date('H:i',data.times.endurance)}}
-
----------------------------------------------------------------------------
-ATC FLIGHT PLAN DATA
----------------------------------------------------------------------------
-{{data.atc.fpl}}
-    </pre>
-
-    <div class="page-break"></div>
-
-    <pre>
----------------------------------------------------------------------------
-                            NAVIGATION LOG
----------------------------------------------------------------------------
-AWY     WAYPOINT  LAT/LON     ALT   WIND   OAT  FREQ   TAS  GSPD  DIST  REM
-        TAS/GSPD  TT/MC       EET   ATO    MRE  FUEL   PBD  ZID   ACC   USED
----------------------------------------------------------------------------
-        {{data.origin.icao_code}}
-        Elev:{{helper.formatAirportElevation(data.origin.elevation)}}FT  {{helper.formatLatLon(data.origin.pos_lat, data.origin.pos_lon)}}                {{php_str_pad(data.fuel.plan_ramp,5)}}
-    </pre>
-    {% if data.navlog and data.navlog.fix %}
-    {% for f in data.navlog.fix %}
-    <div class="nav-row">
-    <pre>{{php_str_pad(f.awid,7,' ','right')}} {{php_str_pad(f.ident,9,' ','right')}} {{helper.formatLatLon(f.pos_lat, f.pos_lon)}}  {{php_str_pad(f.altitude,5)}} {{f.wind_dir:03d}}/{{f.wind_spd:03d}} {{helper.formatOat(f.oat)}} -----  {{f.tas:03d}}  {{f.gs:03d}}  {{php_str_pad(f.distance,4)}}  {{php_str_pad(f.distance_remaining,4)}}
-        .../...   .../...     {{php_date('H:i', f.time_egt|int)}}  ...:...  ...  {{php_str_pad(f.fuel_remaining,5)}} .../... ...   ...   .....</pre>
-    </div>
-    {% endfor %}
-    {% endif %}
-    <pre>
-        {{data.destination.icao_code}}
-        Elev:{{helper.formatAirportElevation(data.destination.elevation)}}FT  {{helper.formatLatLon(data.destination.pos_lat, data.destination.pos_lon)}}                {{php_str_pad(data.fuel.reserve,5)}}
----------------------------------------------------------------------------
-    </pre>
-
-    <div class="page-break"></div>
-
-    <pre>
----------------------------------------------------------------------------
-                        ENROUTE WIND & OAT MATRIX
----------------------------------------------------------------------------
-IDENT   FL100     FL180     FL240     FL300     FL340     FL390     FL450
----------------------------------------------------------------------------
-    </pre>
-    {% if data.navlog and data.navlog.fix %}
-    {% for f in data.navlog.fix %}
-    <div class="nav-row">
-    <pre>{{helper.formatWindMatrixRow(f)}}</pre>
-    </div>
-    {% endfor %}
-    {% endif %}
-
-    <div class="page-break"></div>
-
-    <div class="landscape-section">
-        <div class="notam-header-landscape">AERONAUTICAL NOTAM RECORDS</div>
-        <div class="notam-columns">
-            {% for group in notam_groups %}
-            <div class="notam-group">
-                <div class="notam-group-header">{{group.title}}</div>
-                {% if group.notams %}
-                    {% for n in group.notams %}
-                    <div class="notam-item">
-                        <b>{{n.notam_id or n.notamdrec_id}}</b><br>
-                        <pre style="font-size: 9pt; line-height: 11pt;">{{n.notam_text or n.notam_raw}}</pre>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <p style="font-size: 10pt; font-style: italic;">No critical NOTAM constraints found for this sector.</p>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <div class="page-break"></div>
-
-    <div class="wx-header">METEOROLOGICAL PACKAGES (METAR & TAF DATA)</div>
-    {% for wx in weather_info %}
-    <div class="wx-section">
-        <div class="wx-airport-title">{{wx.title}}</div>
-        <div class="wx-data"><pre>{{wx.data}}</pre></div>
-    </div>
-    {% endfor %}
-
-    {% if map_images %}
-    {% for m in map_images %}
-    <div class="page-break"></div>
-    <div class="map-container">
-        <div class="map-title">{{m.name|upper}}</div>
-        <img class="map-image" src="{{m.url}}" alt="{{m.name}}">
-    </div>
-    {% endfor %}
-    {% endif %}
-</body>
-</html>
-"""
-
-# ---------------------------------------------------------
-# MAIN INTERFACE PORTAL (DASHBOARD)
-# ---------------------------------------------------------
-def dashboard():
+def main_app():
+    # Menjaga padding agar UI tetap rapi
     st.markdown("""
     <style>
         .appview-container .main .block-container { padding: 3rem 5rem !important; } 
@@ -499,39 +190,38 @@ def dashboard():
     </style>
     """, unsafe_allow_html=True)
     
-    query_params = st.query_params
-    sb_username_url = query_params.get("username", "")
-
-    st.sidebar.title(f"Welcome, {sb_username_url if sb_username_url else 'Crew'}")
     st.title("OFP & Briefing Package Generator")
     
+    # Membaca Logo untuk Template PDF (FDCGA.png)
     logo_path = "FDCGA.png"
     logo_base64 = get_image_base64(logo_path)
 
-    sb_userid = st.text_input("SimBrief Username / User ID Account Input:", value=sb_username_url)
-    download_placeholder = st.container()
+    # KOTAK INPUT SIMBRIEF USERNAME
+    sb_username = st.text_input("Masukkan SimBrief Username:", value="")
     
-    if sb_userid:
-        with st.spinner(f"⏳ Syncing operational data feed from SimBrief ({sb_userid})..."):
-            if sb_userid.isdigit():
-                sb_url = f"https://www.simbrief.com/api/xml.fetcher.php?userid={sb_userid}&json=1"
-            else:
-                sb_url = f"https://www.simbrief.com/api/xml.fetcher.php?username={sb_userid}&json=1"
-                
+    if st.button("Generate Flight Plan PDF"):
+        if not sb_username:
+            st.warning("Silakan masukkan SimBrief Username terlebih dahulu.")
+            return
+            
+        with st.spinner(f"⏳ Mengunduh data dari SimBrief (Username: {sb_username})..."):
+            # Update the API endpoint to use 'username' instead of 'userid'
+            sb_url = f"https://www.simbrief.com/api/xml.fetcher.php?username={sb_username}&json=1"
             try:
                 response = requests.get(sb_url, timeout=15)
                 response.raise_for_status()
                 data_json = response.json()
                 
                 if 'fetch' in data_json and data_json['fetch']['status'] != 'Success':
-                    st.error(f"⚠️ SimBrief Network Exception: {data_json['fetch']['status']}")
+                    st.error(f"⚠️ Peringatan SimBrief: {data_json['fetch']['status']}")
                     return
             except Exception as e:
-                st.error(f"❌ Network Layer Connection Denied: {e}")
+                st.error(f"❌ Gagal mengunduh data: {e}")
                 return
 
-        with st.spinner("⚙️ Transforming payload context data maps and generating layout rules..."):
+        with st.spinner("⚙️ Memproses data dan merender PDF..."):
             try:
+                # 3. DATA PREPARATION
                 data_obj = dict_to_obj(data_json)
                 
                 raw_alternates = data_obj.get('alternate', [])
@@ -555,24 +245,28 @@ def dashboard():
                 airport_info = []
                 weather_info = []
 
+                # Origin
                 try:
                     t_val = php_date('Hi', data_obj.times.sched_out) + "Z"
                     airport_info.append({'icao': data_obj.origin.icao_code, 'iata': data_obj.origin.iata_code, 'label': 'STD', 'time': t_val, 'notams': get_filtered_notams(data_obj.origin.get('notam')), 'taf': data_obj.origin.get('taf', 'N/A')})
                     weather_info.append({'title': f"DEPARTURE AIRPORT : {data_obj.origin.icao_code}", 'data': (data_obj.origin.get('taf', '') or "") + "\n" + (data_obj.origin.get('metar', '') or "")})
                 except: pass
 
+                # Destination
                 try:
                     t_val = php_date('Hi', data_obj.times.est_in) + "Z"
                     airport_info.append({'icao': data_obj.destination.icao_code, 'iata': data_obj.destination.iata_code, 'label': 'ETA', 'time': t_val, 'notams': get_filtered_notams(data_obj.destination.get('notam')), 'taf': data_obj.destination.get('taf', 'N/A')})
                     weather_info.append({'title': f"DESTINATION AIRPORT : {data_obj.destination.icao_code}", 'data': (data_obj.destination.get('taf', '') or "") + "\n" + (data_obj.destination.get('metar', '') or "")})
                 except: pass
 
+                # Alternates
                 for alt in alternates_list:
                     try: t_val = php_date('Hi', int(data_obj.times.est_in) + int(alt.ete)) + "Z"
                     except: t_val = "...."
                     airport_info.append({'icao': alt.icao_code, 'iata': alt.iata_code, 'label': 'ETA (ALTN)', 'time': t_val, 'notams': get_filtered_notams(alt.get('notam')), 'taf': alt.get('taf', 'N/A')})
                     weather_info.append({'title': f"DESTINATION ALTERNATE AIRPORT : {alt.icao_code}", 'data': (alt.get('taf', '') or "") + "\n" + (alt.get('metar', '') or "")})
 
+                # ETOPS
                 etops_apts_list = []
                 if data_obj.get('etops') and 'suitable_airport' in data_obj.etops:
                     etops_apts = data_obj.etops.suitable_airport
@@ -584,6 +278,7 @@ def dashboard():
                         if not wx_data.strip(): wx_data = "WEATHER DATA NOT AVAILABLE IN JSON"
                         weather_info.append({'title': f"ENROUTE ALTERNATE AIRPORT : {apt.icao_code}", 'data': wx_data})
 
+                # Notams
                 notam_groups = []
                 notam_groups.append({'title': f"DEPARTURE AIRPORT : {data_obj.origin.icao_code}", 'notams': data_obj.origin.get('notam', [])})
                 notam_groups.append({'title': f"DESTINATION AIRPORT : {data_obj.destination.icao_code}", 'notams': data_obj.destination.get('notam', [])})
@@ -619,42 +314,641 @@ def dashboard():
                     hash_int = int(req_id[:8], 16) if req_id else 0
                     foo_id = 1000 + (hash_int % 9000)
                 except: foo_id = 1234
-
-                # PRE-CALCULATE TRUNCATED REFERENCE PLAN ID TO REMOVE COLONS FROM JINJA TAGS
-                req_id_str = str(data_obj.get('params', {}).get('request_id', ''))
-                req_slice = req_id_str[-5:] if len(req_id_str) >= 5 else req_id_str
                 
-                env = Environment(loader=BaseLoader(), extensions=['jinja2.ext.loopcontrols'])
+                # ==========================================
+                # FULL TEMPLATE STRING DENGAN DESAIN BARU
+                # ==========================================
+                template_str = """
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>{{data.general.icao_airline}}-{{data.general.flight_number}}</title>
+    <style>
+        * { margin: 0; padding: 0; }
+        @page {
+            margin: 0.50cm 1.38cm 0.81cm 0.92cm;
+            size: A4;
+            font-family: Courier, monospace;
+        }
+
+        /* LANDSCAPE PAGE DEFINITION FOR NOTAMS AND MAPS */
+        @page landscape-page {
+            size: A4 landscape;
+            margin: 0.5cm;
+            @bottom-right { content: "PAGE " counter(page) " OF " counter(pages); font-size: 8pt; font-family: Courier, monospace; color: #7D7D7D;}
+            @top-right { content: "PACKAGE GIA{{data.general.flight_number}}"; font-size: 8pt; font-family: Courier, monospace; color: #7D7D7D;}
+        }
+
+        body {
+            font-family: Courier, monospace;
+            font-size: 10.5pt;
+            line-height: 12pt;
+            margin: 0;
+        }
+
+        /* HEADER & FOOTER UPDATED UNTUK FORMAT BARU */
+        .header { position: fixed; top: -10px; left: 0; right: 0; text-align: right; font-size: 8pt; color: #7D7D7D; font-family: Courier, monospace; }
+        .footer { position: fixed; bottom: -20px; left: 0; right: 0; height: 20px; text-align: right; font-size: 8pt; color: #7D7D7D; font-family: Courier, monospace; }
+        .page-number:before { content: "BRIEFING TEXT {{data.general.icao_airline}}{{data.general.flight_number}}-{{php_date('d-m-y', data.times.sched_out)}}-{{php_date('Hi', data.times.sched_out)}}-{{data.origin.icao_code}} PAGE " counter(page) " OF " counter(pages); }
+        .page-number-footer:before { content: "PAGE " counter(page) " of " counter(pages); }
+
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            font-family: Courier, monospace;
+            display: block;
+            font-size: 11pt;
+            line-height: 13.5pt;
+        }
+
+        .nw-container { width: 100%; border: 2px solid #000; margin-bottom: 5px; page-break-inside: avoid; }
+        .nw-header {
+            background-color: #ADD8E6; /* Light Blue */
+            border-bottom: 1px solid #000;
+            text-align: center;
+            font-weight: bold;
+            padding: 2px;
+            font-size: 11pt;
+            line-height: 1.2;
+        }
+        .nw-content { padding: 5px; font-size: 10.5pt; }
+        .section-title {
+            font-weight: bold;
+            text-decoration: underline;
+            display: block;
+            margin-bottom: 2px;
+            font-size: 10.5pt;
+        }
+
+        /* Footer Box */
+        .footer-box {
+            border: 2px solid black;
+            border-radius: 15px;
+            padding: 10px;
+            text-align: center;
+            margin-top: 15px;
+            font-family: Courier, monospace;
+            font-size: 9pt;
+            page-break-inside: avoid;
+        }
+
+        /* Landscape Section (NOTAM & Maps) */
+        .landscape-section {
+            page: landscape-page;
+            font-family: Courier, monospace;
+            font-size: 10.5pt;
+        }
+
+        .notam-header-landscape {
+            text-align: center;
+            font-weight: bold;
+            font-size: 14pt;
+            margin-bottom: 5px;
+            width: 100%;
+        }
+
+        .notam-columns {
+            column-count: 2;
+            column-gap: 1cm;
+            column-rule: 1px solid #ccc;
+            text-align: justify;
+        }
+
+        .notam-group {
+            break-inside: auto;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .notam-group-header {
+            font-weight: bold;
+            border-bottom: 1px solid black;
+            margin-bottom: 5px;
+            margin-top: 10px;
+            font-size: 11pt;
+            padding: 2px;
+        }
+
+        .notam-item {
+            margin-bottom: 12px;
+            break-inside: avoid;
+        }
+
+        /* WEATHER PAGE STYLES */
+        .wx-header {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 20px;
+            font-size: 12pt;
+        }
+        .wx-section {
+            margin-bottom: 20px;
+            break-inside: avoid;
+        }
+        .wx-airport-title {
+            font-weight: bold;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 2px;
+            margin-bottom: 5px;
+            font-family: Courier, monospace;
+        }
+        .wx-data {
+            font-family: Courier, monospace;
+            font-size: 10.5pt;
+            white-space: pre-wrap;
+        }
+
+        /* MAP Styles */
+        .map-container {
+            text-align: center;
+            width: 100%;
+            height: 100%;
+        }
+        .map-title {
+            font-weight: bold;
+            font-size: 14pt;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .map-image {
+            max-width: 100%;
+            max-height: 17cm;
+            object-fit: contain;
+            border: 1px solid #000;
+        }
+
+        .nav-row { white-space: pre-wrap; page-break-inside: avoid; display: block; }
+        .page-break { page-break-after: always; }
+    </style>
+</head>
+<body>
+    <div class="header"><div class="page-number"></div></div>
+    <div class="footer"><div class="page-number-footer"></div></div>
+
+    <div style="text-align: center; margin-bottom: 15px;">
+        {% if logo_base64 %}
+        <img src="data:image/png;base64,{{logo_base64}}" style="max-height: 60px; width: auto;"><br>
+        {% endif %}
+        <span style="font-size: 15pt; font-family: Courier, monospace;">BRIEFING TEXT</span><br>
+        {{data.general.icao_airline}}{{data.general.flight_number}} {{data.origin.icao_code}}-{{data.destination.icao_code}} {{data.aircraft.reg}} {{php_date('d/m/y', data.times.sched_out)}}
+    </div>
+
+    <pre>
+1. CREW ALERT
+   NIL
+
+2. AIRCRAFT STATUS
+   APU       : SERVICEABLE
+   HIL       : NIL
+
+3. NOTAM & WEATHER
+    </pre>
+
+    {% for apt in airport_info %}
+    <div class="nw-container">
+        <div class="nw-header">
+            {{apt.icao}}/{{apt.iata}}<br>
+            {{apt.time}}
+        </div>
+        <div class="nw-content">
+            <span class="section-title">NOTAM:</span>
+<pre style="margin:0; padding:0;">
+{% if apt.notams %}
+{%- for n in apt.notams -%}
+{{n.id}}
+{{n.text}}
+{%- if not loop.last -%}
+.
+{% endif %}
+{% endfor -%}
+{%- else -%}
+NO SIGNIFICANT NOTAM.
+{%- endif -%}
+</pre>
+            <div style="border-top: 1px solid #000; margin: 5px 0;"></div>
+            <span class="section-title">FORECAST WEATHER:</span>
+            <pre style="margin:0;">{{apt.taf if apt.taf else 'REFER TO WX PKG'}}</pre>
+        </div>
+    </div>
+    {% endfor %}
+
+    <pre>
+
+4. SIGNIFICANT WX EN-ROUTE
+   TYPHOON      : NIL
+   TURBULENCE   : LIGHT
+   JETSTREAM    : PSE CHECK SIGWX
+   CLOUDS       : PSE CHECK SIGWX
+   WIND COMP.   : {{helper.formatAvgWindComp(data.general.avg_wind_comp)}}
+
+5. EST PAYLOAD
+   PAX          : {{data.weights.pax_count}}
+   CARGO        : {{data.weights.cargo}}
+   PAYLOAD      : {{data.weights.payload}} KGS
+    </pre>
+
+    <div class="footer-box">
+        <b>Flight Dispatch Center</b><br>
+        Operation Center II Building 3rd Floor | Garuda City | Soekarno-Hatta International Airport<br>
+        Cengkareng 19120, Indonesia<br>
+        Office Phone: +62 21 559 0451, +62 21 2560 1524, +62 21 559 15428 | Fax: +62 21 550 1911<br>
+        Email Address: flight-dispatch-center@garuda-indonesia.com; cflightdispatch@gmail.com;<br>
+        SITA Address: JKTOIGA
+    </div>
+
+    <div class="page-break"></div>
+
+    <pre>---------------------------------------------------------------------------
+                             DISPATCH RELEASE
+---------------------------------------------------------------------------
+VALID U/I {{php_date('Hi', (data.times.sched_out|int) + 21600)}}Z
+REF PLAN {{data.params.request_id[-5:]}} / REV NBR {{data.general.release}}
+{{data.atc.callsign}}   {{php_date('dMy',data.times.sched_out)}} ETD {{php_date('Hi',data.times.sched_out)}}Z  ETA {{php_date('Hi',data.times.est_in)}}Z / FT {{php_date('Hi',data.times.est_block)}} IFR {{data.aircraft.reg}}
+
+1.  POD/POA : {{data.origin.icao_code}}/{{data.destination.icao_code}}
+
+2.  INITIAL DESTINATION (FOR PLANNED RE-DISPATCH AS APPLICABLE):
+
+3.  WX
+    ORG {{data.origin.iata_code}}/{{data.origin.icao_code}}  CHECKED             {% if alternates|length > 0 %}AL1 {{alternates[0].iata_code}}/{{alternates[0].icao_code}}  CHECKED {% endif %}
+    DES {{data.destination.iata_code}}/{{data.destination.icao_code}}  CHECKED             {% if alternates|length > 1 %}AL2 {{alternates[1].iata_code}}/{{alternates[1].icao_code}}  CHECKED {% endif %}
+
+4.  NOTAM AND/OR AERONAUTICAL INFORMATION
+    ALL NOTAMS SIGNIFICANT TO FLIGHT ARE CONSIDERED
+
+5.  LOAD
+    EST PAX ADL{{str_pad(data.weights.pax_count,3,'0','left')}}/CHD000/INF000          TOTAL  {{data.weights.pax_count}}
+    EST CGO {{data.weights.cargo}} KGS
+    EST PLD {{data.weights.payload}} KGS
+
+6.  FLIGHT PLAN DATA
+    TRP   {{str_pad(data.fuel.enroute_burn, 6, '0', 'left')}}   KGS {{php_date('H:i',data.times.est_time_enroute)}}         EZF    {{str_pad(data.weights.est_zfw, 6, '0', 'left')}}   MAX {{str_pad(data.weights.max_zfw, 6, '0', 'left')}}
+    RES   {{str_pad(data.fuel.reserve, 6, '0', 'left')}}   KGS {{php_date('H:i',data.times.reserve_time)}}         ELW    {{str_pad(data.weights.est_ldw, 6, '0', 'left')}}   MAX {{str_pad(data.weights.max_ldw, 6, '0', 'left')}}
+    {% if alternates|length > 0 %}ALT   {{str_pad(data.fuel.alternate_burn, 6, '0', 'left')}}   KGS {{php_date('H:i',alternates[0].burn)}}         ETW    {{str_pad(data.weights.est_tow, 6, '0', 'left')}}   MAX {{str_pad(data.weights.max_tow, 6, '0', 'left')}}{% endif %}
+    BLK   {{str_pad(data.fuel.plan_ramp, 6, '0', 'left')}}   KGS {{php_date('H:i',data.times.endurance)}}
+
+7.  ETOPS FLIGHT: {% if not data.etops or data.etops == '0' %} NO {% else %} YES     ETOPS DIVERSION TIME: {{data.etops.rule}} MIN {% endif %}
+
+8.  ENROUTE / ETOPS ALTERNATE: {{ etops_str }}
+
+9.  TAKE OFF ALTERNATE (IF REQUIRED) : ......
+
+10. DESTINATION ALTERNATE: 1. {% if alternates|length > 0 %}{{alternates[0].icao_code}}{% else %}....{% endif %}   2. {% if alternates|length > 1 %}{{alternates[1].icao_code}}{% else %}....{% endif %}
+
+11. FUEL REQ AFTER BRIEF: ............. KGS
+
+    REASON FOR DISCRETIONARY FUEL :....................
+
+12. NOTOC  / (DGR):
+
+13. REMARKS: NONE
+
+I HEREBY RELEASE THIS FLIGHT IN FULL COMPLIANCE WITH CIVIL AVIATION SAFETY
+REGULATIONS AND OPERATION MANUAL PART A (OM-A)
+    DISPATCHED BY               : FOO. {{data.crew.dx | upper}} - {{fooId}}
+
+I HEREBY PREPARE AND ARRANGE THIS FLIGHT DISPATCH RELEASE ACCORDING TO THE
+INSTRUCTION AND DATA PROVIDED BY PT. GARUDA INDONESIA (PERSERO) TBK.
+    NAME / ID                   : .................. / ........
+
+                                   SIGN ......................
+
+I HEREBY ACCEPT THIS FLIGHT DISPATCH RELEASE WITH FULL ACKNOWLEDGEMENT.
+    PILOT IN COMMAND            :  CAPT. {{data.crew.cpt | upper}}
+
+                                   SIGN ......................</pre>
+
+    <div class="page-break"></div>
+
+    <pre>---------------------------------------------------------------------------
+                        COMPUTERIZED FLIGHT PLAN
+---------------------------------------------------------------------------
+PLAN {{data.params.request_id[-5:]}} / REV NUM {{str_pad(data.general.release, 2, '0', 'left')}}       {{data.origin.icao_code}} TO {{data.destination.icao_code}}  {{data.aircraft.icaocode}}  {{helper.formatCruiseProfile(data.general.cruise_profile, data.general.costindex)}}/F  IFR  {{php_date('d/m/y',data.times.sched_out)}}
+NONSTOP COMPUTED {{php_date('Hi',data.params.time_generated)}} ETD {{php_date('Hi',data.times.sched_out)}}Z PROGS {{helper.getWeatherPrognosisTimes(data.times.sched_out)}} {{data.aircraft.reg}} KGS
+
+GARUDA INDONESIA CFP
+
+SPD SKD   CLB-{{helper.formatClimbSpeedProfile(data.general.climb_profile)}}  CRZ-{{helper.formatCruiseProfile(data.general.cruise_profile, data.general.costindex)}}   DSC-{{helper.formatDescendSpeedProfile(data.general.descent_profile)}}
+{% if data.etops and data.etops is mapping %}
+ETOPS FLTPLN {{data.etops.rule}} MINUTES
+{% endif %}
+
+FUEL         CORR      ENDUR
+
+{{str_pad(data.fuel.enroute_burn, 6, '0', 'left')}}       .. ..     {{php_date('H:i',data.times.est_time_enroute)}}    TRIPF INCL {{helper.formatPerfPerfFactor(data.aircraft.fuelfact)}}PCT HIGH CONS
+{{str_pad(data.fuel.contingency, 6, '0', 'left')}}       .. ..     {{php_date('H:i',data.times.contfuel_time)}}    CONTINGENCY/RR
+{{str_pad(data.fuel.reserve, 6, '0', 'left')}}       .. ..     {{php_date('H:i',data.times.reserve_time)}}    FINAL RESERVE FUEL
+{% if alternates|length > 0 %}{{str_pad(data.fuel.alternate_burn, 6, '0', 'left')}}       .. ..     {{php_date('H:i',alternates[0].burn)}}    ALTN {{alternates[0].icao_code}}{% endif %}
+{{str_pad(helper.getFuelBucketFuelValue(data.fuel_extra, 'ATC'), 6, '0', 'left')}}       .. ..     {{php_date('H:i',helper.getFuelBucketFuelTime(data.fuel_extra, 'ATC'))}}    EXTRA HOLDING FUEL
+{{str_pad(helper.getFuelBucketFuelValue(data.fuel_extra, 'WXX') + (data.fuel.etops|int), 6, '0', 'left')}}       .. ..     {{php_date('H:i',helper.getFuelBucketFuelTime(data.fuel_extra, 'WXX') + (data.times.etopsfuel_time|int))}}    ADDITIONAL FUEL
+{{str_pad((data.fuel.plan_takeoff|int) - (helper.getFuelBucketFuelValue(data.fuel_extra, 'TANKERING')|int) - (helper.getFuelBucketFuelValue(data.fuel_extra, 'EXTRA')|int), 6, '0', 'left')}}       .. ..     {{php_date('H:i',(data.times.endurance|int) - (helper.getFuelBucketFuelTime(data.fuel_extra, 'TANKERING')|int) - (helper.getFuelBucketFuelTime(data.fuel_extra, 'EXTRA')|int))}}    REQ
+{{str_pad(helper.getFuelBucketFuelValue(data.fuel_extra, 'TANKERING'), 6, '0', 'left')}}       .. ..     {{php_date('H:i',helper.getFuelBucketFuelTime(data.fuel_extra, 'TANKERING'))}}    TANKERING
+{{str_pad(helper.getFuelBucketFuelValue(data.fuel_extra, 'EXTRA'), 6, '0', 'left')}}       .. ..     {{php_date('H:i',helper.getFuelBucketFuelTime(data.fuel_extra, 'EXTRA'))}}    DISCRETIONARY FUEL
+{{str_pad(data.fuel.plan_takeoff, 6, '0', 'left')}}       .. ..     {{php_date('H:i',data.times.endurance)}}    TKOF
+{{str_pad(data.fuel.taxi, 6, '0', 'left')}}       .. ..                 TAXI
+{{str_pad(data.fuel.plan_ramp, 6, '0', 'left')}}       .. ..     {{php_date('H:i',data.times.endurance)}}    BLOCK  FUEL REM .. ..
+
+                ARR  .. ..     TDN   .. ..
+                DEP  .. ..     A/B   .. ..
+                FLT  .. ..     AIR   .. ..
+
+FBURN ADJUSTMENT FOR 1000KGS INCR/DECR IN TOW {{str_pad(data.impacts.zfw_plus_1000.burn_difference,4,'0','left')}}KGS/{{str_pad(data.impacts.zfw_minus_1000.burn_difference|replace('-',''),4,'0','left')}}KGS
+
+FL SUMMARIES
+CRZ          TOW      TRF         TIM      FL
+{% if data.impacts.plus_2000ft -%}
+{{helper.formatCruiseProfile(data.general.cruise_profile, data.impacts.plus_2000ft.cost_index)}}       {{str_pad(data.weights.est_tow,6,'0','left')}}   {{str_pad(data.impacts.plus_2000ft.enroute_burn, 6, '0', 'left')}}      {{php_date('H:i',data.impacts.plus_2000ft.time_enroute)}}     {{(data.impacts.plus_2000ft.initial_fl)}}
+{% endif -%}
+{{helper.formatCruiseProfile(data.general.cruise_profile, data.general.costindex)}}       {{str_pad(data.weights.est_tow,6,'0','left')}}   {{str_pad(data.fuel.enroute_burn, 6, '0', 'left')}}      {{php_date('H:i',data.times.est_time_enroute)}}     {{(data.general.initial_altitude|int)//100}}
+{% if data.impacts.minus_2000ft -%}
+{{helper.formatCruiseProfile(data.general.cruise_profile, data.impacts.minus_2000ft.cost_index)}}       {{str_pad(data.weights.est_tow,6,'0','left')}}   {{str_pad(data.impacts.minus_2000ft.enroute_burn, 6, '0', 'left')}}      {{php_date('H:i',data.impacts.minus_2000ft.time_enroute)}}     {{(data.impacts.minus_2000ft.initial_fl)}}
+{% endif %}
+
+FLT NBR {{data.atc.callsign}}   DTE {{php_date('d/m/y',data.times.sched_out)}}
+
+ EZF       PLD        ELW       ETW     CRZ
+{{str_pad(data.weights.est_zfw,6,'0','left')}}    {{str_pad(data.weights.payload,6,'0','left')}}     {{str_pad(data.weights.est_ldw,6,'0','left')}}    {{str_pad(data.weights.est_tow,6,'0','left')}}   {{helper.formatCruiseProfile(data.general.cruise_profile, data.general.costindex)}}
+
+{% if data.etops and data.etops is mapping %}
+ENRT ALTN SUITABLE
+{%- set etops_apts = data.etops.suitable_airport -%}
+{%- if etops_apts is mapping %}{% set etops_apts = [etops_apts] %}{% endif -%}
+{%- for airport in etops_apts %}
+{{airport.icao_code}} VALIDITY WINDOW {{helper.formatIsoTime(airport.suitability_start)}}Z TO {{helper.formatIsoTime(airport.suitability_end)}}Z
+{%- endfor %}
+
+-E.ENT {{str_replace('.','',helper.formatLatLonEtops(data.etops.entry.pos_lat_fix,data.etops.entry.pos_long_fix))}}  {{helper.interpolateEtpDistance(data.etops.entry, data.navlog)}} NM {{php_date('H:i',data.etops.entry.elapsed_time)}}    {{data.etops.entry.icao_code}}  {{str_replace('.','',helper.formatLatLonEtops(data.etops.entry.pos_lat_apt,data.etops.entry.pos_long_apt))}}
+-E.EXT {{str_replace('.','',helper.formatLatLonEtops(data.etops.exit.pos_lat_fix,data.etops.exit.pos_long_fix))}}  {{helper.interpolateEtpDistance(data.etops.exit, data.navlog)}} NM {{php_date('H:i',data.etops.exit.elapsed_time)}}    {{data.etops.exit.icao_code}}  {{str_replace('.','',helper.formatLatLonEtops(data.etops.exit.pos_lat_apt,data.etops.exit.pos_long_apt))}}
+
+{%- set ns_etops = namespace(criticalEtp=data.etops.critical_point.fix_type, deficit=0) -%}
+{%- set etps = data.etops.equal_time_point | default([]) -%}
+{%- if etps is mapping %}{% set etps = [etps] %}{% endif -%}
+{%- for etp in etps -%}
+    {%- if etp.pos_lat|float == data.etops.critical_point.pos_lat|float and etp.pos_long|float == data.etops.critical_point.pos_long|float -%}
+        {%- set ns_etops.criticalEtp = 'ETP' ~ loop.index -%}
+    {%- endif -%}
+{%- endfor -%}
+{%- set def_val = data.etops.critical_point.est_fob|float - data.etops.critical_point.critical_fuel|float -%}
+{%- if def_val > 0 %}{% set ns_etops.deficit = 0 %}{% else %}{% set ns_etops.deficit = def_val|abs %}{% endif %}
+MOST CRITICAL FUEL SCENARIO AT : {{ns_etops.criticalEtp}} FUEL DEFICIT OF {{ns_etops.deficit}} KGS
+
+{%- if etps|length > 0 %}
+                                                         TIME TO
+                   DIST        W/C    CFR   FOB    EXC   ETP/ALT
+{%- for etp in etps %}
+{%- set da1 = (etp.div_airport[0] if etp.div_airport is sequence else etp.div_airport) -%}
+{%- set da2 = (etp.div_airport[1] if etp.div_airport is sequence and etp.div_airport|length > 1 else (etp.div_airport if etp.div_airport is mapping else etp.div_airport[0])) %}
+ETP{{loop.index}} {{da1.icao_code}}/{{da2.icao_code}}   {{str_pad(da1.distance,4,'0','left')}}/{{str_pad(da2.distance,4,'0','left')}}  {{helper.formatAvgWindComp(da1.avg_wind_comp)}}/{{helper.formatAvgWindComp(da2.avg_wind_comp)}} {{str_pad(etp.critical_fuel,5,'0','left')}} {{str_pad(etp.est_fob,6,'0','left')}} {{str_pad((etp.est_fob|int - etp.critical_fuel|int),5,'0','left')}} {{php_date('Hi',etp.elapsed_time)}}/{{php_date('Hi',etp.div_time)}}
+     {{helper.formatLatLonEtops(etp.pos_lat, etp.pos_long)}}
+{%- endfor %}
+{%- endif %}
+{%- endif %}
+
+ETO TIM   AWY     WPT/FRQ      TTK   DIS  TAS  FLV   TD /TP   FBO    PFRM
+ATO TIM      COORD             MTK   TTL  G/S  GMA   WIND     ABO    AFRM
+
+        {{data.origin.icao_code}}                                                       {{str_pad(data.fuel.taxi, 5, '0', 'left')}}  {{str_pad(data.fuel.plan_takeoff, 6, '0', 'left')}}
+        ELEV {{helper.formatAirportElevation(data.origin.elevation)}} FT
+        {{helper.formatLatLon(data.origin.pos_lat, data.origin.pos_long)}}
+</pre>
+<div>
+{% set ns = namespace(totalDistance=0) %}
+{% for fix in data.navlog.fix | default([]) %}
+    {% set ns.totalDistance = ns.totalDistance + (fix.distance|int) %}
+    {% if fix.fir_crossing.fir %}
+        {% if fix.fir_crossing.fir is mapping %}
+            {% set fir_list = [fix.fir_crossing.fir] %}
+        {% else %}
+            {% set fir_list = fix.fir_crossing.fir %}
+        {% endif %}
+        {% for fir in fir_list %}
+<div class="nav-row">
+    0000  {{str_pad(fix.via_airway,6)}} FIR/{{fir.fir_icao}}      {{fix.track_true}}T  000  {{str_pad(fix.true_airspeed,3,'0','left')}}  {% if fix.stage=='CLB' %}CLB {% else %}{{str_pad((fix.altitude_feet|int)//100,3,'0','left')}} {% endif %}  {{str_pad(helper.getIsa(fix),7)}} {{str_pad(fix.fuel_totalused,5,'0','left')}}  {{str_pad(fix.fuel_plan_onboard,6,'0','left')}}
+    {{php_date('Hi',fix.time_total)}}    {{helper.formatLatLon(fir.pos_lat_entry, fir.pos_long_entry)}}    {{fix.track_mag}}M  0000 {{str_pad(fix.groundspeed,3,'0','left')}}  {{str_pad((fix.mora|int)//100,3,'0','left')}}   {{fix.wind_dir}}{{str_pad(fix.wind_spd,3,'0','left')}}
+</div>
+        {% endfor %}
+    {% endif %}
+
+<div class="nav-row">
+    {{php_date('Hi',fix.time_leg)}}  {{str_pad(fix.via_airway,6)}} {{str_pad(helper.reformatCoordinate(fix.ident), 12, ' ', 'right')}}  {{fix.track_true}}T  {{str_pad(fix.distance,3,'0','left')}}  {{str_pad(fix.true_airspeed,3,'0','left')}}  {% if fix.stage=='CLB' %}CLB {% else %}{{str_pad((fix.altitude_feet|int)//100,3,'0','left')}} {% endif %}  {{str_pad(helper.getIsa(fix),7)}} {{str_pad(fix.fuel_totalused,5,'0','left')}}  {{str_pad(fix.fuel_plan_onboard,6,'0','left')}}
+    {{php_date('Hi',fix.time_total)}}    {{helper.formatLatLon(fix.pos_lat, fix.pos_long)}}    {{fix.track_mag}}M  {{str_pad(ns.totalDistance,4,'0','left')}} {{str_pad(fix.groundspeed,3,'0','left')}}  {{str_pad((fix.mora|int)//100,3,'0','left')}}   {{fix.wind_dir}}{{str_pad(fix.wind_spd,3,'0','left')}}
+    {% if fix.ident == data.destination.icao_code %}
+        ELEV {{helper.formatAirportElevation(data.destination.elevation)}} FT
+    {% endif %}
+</div>
+{% endfor %}
+</div>
+<pre>
+{{helper.getFormattedFir(data.atc.section18)}}
+TRACK USED = -OPT
+
+G/C DIST {{data.origin.icao_code}}/{{data.destination.icao_code}}  {{data.general.gc_distance}} NM
+
+ROUTE DIST {{data.general.route_distance}}NM
+
+MAX FL / AVG.TAS  {{helper.getMaxAlt(data.navlog)}} / {{(data.general.cruise_tas|int)}}
+
+AVG COMP {{helper.formatAvgWindComp(data.general.avg_comp_wind)}}
+
+         GMA  DIST  TTK  W/C   FL   TIME   FUEL BOF
+{% for alt in alternates %}
+{{alt.icao_code}}          {{str_pad(alt.distance,4,'0','left')}}  {{str_pad(alt.track_true,3,'0','left')}}  {{alt.avg_wind_comp}}  {{(alt.cruise_altitude|int)//100}}  {{php_date('H.i',alt.ete)}}  {{str_pad(alt.burn,6,'0','left')}}
+         {{data.destination.icao_code}} {{alt.route_ifps}} {{alt.icao_code}}
+{% endfor %}
+
+                             ALTERNATE DATA
+
+ETO TIM   AWY     WPT/FRQ      TTK   DIS  TAS  FLV   TD /TP   FBO    PFRM
+ATO TIM      COORD             MTK   TTL  G/S  GMA   WIND     ABO    AFRM
+{%- if navlog_alt1 and navlog_alt1.fix -%}
+{% set ns_alt = namespace(totalDistance=0) %}
+{% for fix in navlog_alt1.fix %}
+{% set ns_alt.totalDistance = ns_alt.totalDistance + (fix.distance|int) %}
+    {{php_date('Hi',fix.time_leg)}}  {{str_pad(fix.via_airway,6, ' ', 'right')}} {{str_pad(helper.reformatCoordinate(fix.ident) ~ ' ' ~ (fix.frequency|default('',true)), 12, ' ', 'right')}}  {{fix.track_true}}T  {{str_pad(fix.distance,3,'0','left')}}  {{str_pad(fix.true_airspeed,3,'0','left')}}  {% if fix.stage=='CLB' %}CLB {% else %}{{str_pad((fix.altitude_feet|int)//100,3,'0','left')}} {% endif %}  {{str_pad(helper.getIsa(fix),7)}} {{str_pad(fix.fuel_totalused,5,'0','left')}}  {{str_pad(fix.fuel_plan_onboard,6,'0','left')}}
+    {{php_date('Hi',fix.time_total)}}    {{helper.formatLatLon(fix.pos_lat, fix.pos_long)}}    {{fix.track_mag}}M  {{str_pad(ns_alt.totalDistance,4,'0','left')}} {{str_pad(fix.groundspeed,3,'0','left')}}  {{str_pad((fix.mora|int)//100,3,'0','left')}}   {{fix.wind_dir}}{{str_pad(fix.wind_spd,3,'0','left')}}
+        {%- if fix.ident == alternates[0].icao_code %}ELEV {{helper.formatAirportElevation(alternates[0].elevation)}} FT {% endif %}
+{% endfor %}
+{% endif %}
+
+CLIMB
+         FL100     FL180     FL240     FL300     FL340     FL390     FL450
+{% for fix in data.navlog.fix | default([]) -%}
+{%- if fix.stage == 'CLB' and fix.ident != 'TOC' -%}
+{{helper.formatWindMatrixRow(fix)}}
+{% endif -%}
+{% endfor %}
+
+CRUISE
+         FL100     FL180     FL240     FL300     FL340     FL390     FL450
+{% for fix in data.navlog.fix | default([]) -%}
+{%- if fix.stage == 'CRZ' and fix.ident != 'TOD' -%}
+{{helper.formatWindMatrixRow(fix)}}
+{% endif -%}
+{% endfor %}
+
+DESCENT
+         FL100     FL180     FL240     FL300     FL340     FL390     FL450
+{% for fix in data.navlog.fix | default([]) -%}
+{%- if fix.stage == 'DSC' -%}
+{{helper.formatWindMatrixRow(fix)}}
+{% endif -%}
+{% endfor %}
+
+I CERTIFY THAT HAVE SATISFIED MYSELF THAT ALL FACTORS WHICH FORM THE BASIS OF
+FLIGHT PREPARATION ARE IN ACCORDANCE WITH THE PERTINENT REGULATIONS LAID DOWN
+BY THE INDONESIAN CIVIL AVIATION, CAPTAIN {{strtoupper(data.crew.cpt)}}
+
+PIC             : CAPTAIN {{strtoupper(data.crew.cpt)}}
+
+SIGN            : .. .. .. .. .. ..
+
+PREPARED BY     : FOO. {{strtoupper(data.crew.dx)}} - {{fooId}}
+
+CAPTAINS SIGNATURE FOR COMPLETION OF JOURNAL AFTER FLIGHT
+
+                                      .. .. .. .. ..
+
+{% for line in data.atc.flightplan_text.split('\n') -%}
+{% if line -%}
+{{line}}
+{% endif -%}
+{% endfor %}
+
+{% if data.etops %}
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+{% for etp in data.etops.equal_time_point | default([]) %}
+2D
+ETP {{str_replace('.','',helper.formatLatLonEtops(etp.pos_lat, etp.pos_long))}}
+TO ETP BURN {{str_pad(data.fuel.plan_takeoff|int - etp.est_fob|int, 6, '0', 'left')}}
+       TIME  {{php_date('H.i', etp.elapsed_time)}}
+       DIST   {{str_pad(helper.interpolateEtpAnalysisDistance(etp, data.navlog), 4, '0', 'left')}}
+       ETP AIRPORTS
+       {% set da1 = (etp.div_airport[0] if etp.div_airport is sequence else etp.div_airport) %}
+       {% set da2 = (etp.div_airport[1] if etp.div_airport is sequence and etp.div_airport|length > 1 else (etp.div_airport if etp.div_airport is mapping else etp.div_airport[0])) %}
+       {{da1.icao_code}}    {{da2.icao_code}}
+TIME   {{php_date('H.i', etp.div_time)}}   {{php_date('H.i', etp.div_time)}}
+RQFUEL {{str_pad(etp.div_burn, 6, '0', 'left')}}  {{str_pad(etp.div_burn, 6, '0', 'left')}}
+FL     {{(etp.div_altitude|int) / 100}}   {{(etp.div_altitude|int) / 100}}
+DIST   {{str_pad(da1.distance, 4, '0', 'left')}}    {{str_pad(da2.distance, 4, '0', 'left')}}
+WIND   {{helper.formatEtopsAvgWindComp(da1.avg_wind_comp)}}    {{helper.formatEtopsAvgWindComp(da2.avg_wind_comp)}}
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+{% endfor %}
+{% endif %}
+
+END OF NAVTECH DATAPLAN
+REQUEST NO. {{data.params.request_id[-5:]}} / REV NBR {{data.general.release}}
+</pre>
+
+    <div class="landscape-section">
+        <div class="notam-header-landscape">
+            NOTAM BRIEFING<br>
+            {{data.general.icao_airline}}{{data.general.flight_number}} - {{php_date('Y-m-d', data.times.sched_out)}}
+        </div>
+
+        <div class="notam-columns">
+        {% for group in notam_groups %}
+            {% if group.notams %}
+            <div class="notam-group">
+                <div class="notam-group-header">{{ group.title }}</div>
+                {% for n in group.notams %}
+                <div class="notam-item">
+                    <b>{{ n.notam_id }}</b> {{ n.notam_nrc }}<br>
+                    Q) {{ n.notam_qcode }}<br>
+                    A) {{ n.location_id }}
+                    B) {{ n.get('notam_effective_dtg', n.get('date_effective', '')) }}
+                    {% if n.get('notam_expire_dtg', n.get('date_expire', '')) %}C) {{ n.get('notam_expire_dtg', n.get('date_expire', '')) }}<br>{% endif %}
+                    {% if n.notam_schedule %}D) {{ n.notam_schedule }}<br>{% endif %}
+                    E) {{ n.notam_text }}<br>
+                    {% if n.lower_limit %}F) {{ n.lower_limit }} G) {{ n.upper_limit }}{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endfor %}
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="wx-header">
+    <br><br>
+        THE FOLLOWING ARE EXTRACT FROM:<br>
+        BADAN METEOROLOGI, KLIMATOLOGI, DAN GEOFISIKA<br>
+        BIDANG METEOROLOGI PENERBANGAN<br>
+        WHICH MAY EFFECT TO THE OPERATION OF FLIGHT<br><br>
+        WEATHER BRIEFING
+    </div>
+    <hr>
+
+    {% for wx in weather_info %}
+    <div class="wx-section">
+        <div class="wx-airport-title">{{wx.title}}</div>
+        <div class="wx-data">{{wx.data}}</div>
+    </div>
+    <hr style="border-top: 1px solid #ccc;">
+    {% endfor %}
+
+    <div class="page-break"></div>
+
+    {% if map_images %}
+    <div class="landscape-section">
+
+<div style="text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 10px;">
+            FLIGHT MAPS<br>
+            {{data.general.icao_airline}}{{data.general.flight_number}} - {{php_date('Y-m-d', data.times.sched_out)}}
+        </div>
+
+        {% for map in map_images %}
+            <div class="map-container">
+                <div class="map-title">{{ map.name }}</div>
+                <img src="{{ map.url }}" class="map-image">
+            </div>
+            {% if not loop.last %}<div class="page-break"></div>{% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</body>
+</html>
+"""
+
+                # Execution Jinja2
+                env = Environment(loader=BaseLoader())
                 env.globals.update({
-                    'php_date': php_date, 'php_str_pad': php_str_pad, 'php_wordwrap': php_wordwrap,
-                    'helper': PythonHelper(), 'foo_id': foo_id, 'etops_alternates_str': etops_alternates_str,
-                    'airport_info': airport_info, 'notam_groups': notam_groups, 'alternates': alternates_list,
+                    'helper': PythonHelper(), 'php_date': php_date, 'str_pad': php_str_pad,
+                    'strtoupper': lambda x: str(x).upper() if x else "", 'date': php_date,
+                    'abs': abs, 'int': int, 'str_replace': lambda o, n, s: str(s).replace(o, n),
+                    'wordwrap': php_wordwrap, 'fooId': foo_id, 'etops_str': etops_alternates_str,
+                    'notam_groups': notam_groups, 'alternates': alternates_list,
                     'weather_info': weather_info, 'map_images': map_images, 'navlog_alt1': navlog_alt1,
-                    'logo_base64': logo_base64, 'req_slice': req_slice
+                    'logo_base64': logo_base64
                 })
                 
                 template = env.from_string(template_str)
                 rendered_html = template.render(data=data_obj, airport_info=airport_info, alternates=alternates_list, notam_groups=notam_groups, weather_info=weather_info, map_images=map_images)
                 
+                # Render PDF buffer with WeasyPrint
                 pdf_buffer = io.BytesIO()
                 HTML(string=rendered_html).write_pdf(pdf_buffer)
                 
-                with download_placeholder:
-                    st.success("✅ Operational Briefing Package processed successfully!")
-                    pdf_filename = f"GIA{data_obj.general.flight_number}_Briefing_Final.pdf"
-                    st.download_button(
-                        label="📥 Download Flight Plan PDF",
-                        data=pdf_buffer.getvalue(),
-                        file_name=pdf_filename,
-                        mime="application/pdf",
-                        type="primary"
-                    )
+                st.success("✅ Berhasil! File PDF telah dibuat dan siap diunduh.")
+                
+                pdf_filename = f"GIA{data_obj.general.flight_number}_Briefing_Final.pdf"
+                st.download_button(
+                    label="📥 Download Flight Plan PDF",
+                    data=pdf_buffer.getvalue(),
+                    file_name=pdf_filename,
+                    mime="application/pdf",
+                    type="primary"
+                )
+                
             except Exception as e:
-                st.error(f"❌ File Rendering Exception: {e}")
-    else:
-        st.info("💡 Awaiting SimBrief runtime parameter context synced from active EFB PHP dashboards...")
+                st.error(f"❌ Terjadi kesalahan saat memproses data/PDF: {e}")
 
 # ---------------------------------------------------------
-# APPLICATION LIFECYCLE DISPATCHER
+# ROUTING APLIKASI
 # ---------------------------------------------------------
-dashboard()
+if __name__ == "__main__":
+    main_app()
