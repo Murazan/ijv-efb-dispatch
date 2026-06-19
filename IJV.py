@@ -1085,7 +1085,7 @@ REQUEST NO. {{data.params.request_id[-5:]}} / REV NBR {{data.general.release}}
                 )
                 
                 # --- ADD THIS TO RENDER THE INTERACTIVE PDF ON SCREEN ---
-                 st.markdown("### 📄 Flight Plan PDF Preview")
+                st.markdown("### 📄 Flight Plan PDF Preview")
                 base64_pdf = base64.b64encode(pdf_buffer.getvalue()).decode('utf-8')
                 pdf_display = f"""
                 <object data="data:application/pdf;base64,{base64_pdf}" type="application/pdf" width="100%" height="1000px">
