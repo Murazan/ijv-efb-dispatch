@@ -47,13 +47,10 @@ def php_date(fmt, timestamp):
     if not timestamp or str(timestamp).strip() in ["0", ""]:
         return ""
     try:
-        # Check if the timestamp is an ISO format string (contains 'T' or '-')
         if isinstance(timestamp, str) and ('T' in timestamp or '-' in timestamp):
-            # Clean up the string representation trailing 'Z' if present
             clean_ts = timestamp.replace('Z', '+00:00')
             dt = datetime.fromisoformat(clean_ts)
         else:
-            # Fall back to standard epoch integer timestamp parsing
             ts = int(float(timestamp))
             dt = datetime.fromtimestamp(ts, tz=timezone.utc)
             
@@ -173,7 +170,12 @@ def format_wind_matrix_row(f):
 
 def get_weather_prognosis_times(etd):
     try:
-        dt = datetime.fromtimestamp(int(etd), tz=timezone.utc)
+        if isinstance(etd, str) and ('T' in etd or '-' in etd):
+            clean_ts = etd.replace('Z', '+00:00')
+            dt = datetime.fromisoformat(clean_ts)
+        else:
+            dt = datetime.fromtimestamp(int(float(etd)), tz=timezone.utc)
+            
         hour = dt.hour
         next_hour = math.ceil(hour / 3) * 3
         times = []
@@ -629,7 +631,6 @@ REQUEST NO. {{ req_id_short }} / REV NBR {{ data.general.release }}
 # ---------------------------------------------------------
 st.title("✈️ Garuda Indonesia EFB - PDF Briefing Generator")
 
-# Sniff browser query parameters natively
 query_params = st.query_params
 url_username = query_params.get("username", "").strip()
 
@@ -647,12 +648,12 @@ if target_username:
             url = f"https://www.simbrief.com/api/xml.fetcher.php?username={requests.utils.quote(target_username)}&json=v2"
             res = requests.get(url, timeout=15)
             if res.status_code != 200:
-                st.error("❌ Failed to query SimBrief network layer. Verify your internet connection.")
+                st.error("❌ Failed to query SimBrief network layer.")
                 st.stop()
             
             raw_json = res.json()
             if "general" not in raw_json:
-                st.error("❌ Invalid response object returned. Check if this username has generated an active flight plan first.")
+                st.error("❌ Invalid response object. Make sure this username has a generated flight plan.")
                 st.stop()
                 
             data_obj = dict_to_obj(raw_json)
@@ -661,10 +662,8 @@ if target_username:
             st.stop()
 
     # Process structured metadata properties
-# Process structured metadata properties safely whether they are strings or integers
-    sched_out = raw_json['times']['sched_out'] 
+    sched_out = raw_json['times']['sched_out']
     callsign = raw_json['atc'].get('callsign', f"GIA{raw_json['general']['flight_number']}")
-    
     flight_date = php_date('Y-m-d', sched_out)
     brief_d_m_y = php_date('d-m-y', sched_out)
     brief_H_i = php_date('Hi', sched_out)
@@ -684,7 +683,6 @@ if target_username:
             a_obj.burn_time_formatted = php_date('H:i', a.get('burn', 0))
             alternates_list.append(a_obj)
 
-    # Compile Departure/Arrival nodes
     airport_info.append({
         'icao': raw_json['origin']['icao_code'], 'iata': raw_json['origin'].get('iata_code', '---'),
         'time': f"{php_date('Hi', raw_json['times']['sched_out'])}Z", 'notams': get_filtered_notams(raw_json['origin'].get('notam', [])),
@@ -715,18 +713,14 @@ if target_username:
             'data': f"{alt.get('taf', '')}\n\n{alt.get('metar', '')}"
         })
 
-    # Global landscape NOTAM array layout maps
     notam_groups = [
         {'title': f"DEPARTURE AIRPORT : {raw_json['origin']['icao_code']}", 'notams': get_filtered_notams(raw_json['origin'].get('notam', []), 25)},
         {'title': f"DESTINATION AIRPORT : {raw_json['destination']['icao_code']}", 'notams': get_filtered_notams(raw_json['destination'].get('notam', []), 25)}
     ]
     
-    # Process Flight Log (Navlog) Data Rows
-# Process Flight Log (Navlog) Data Rows safely
+    # Process Flight Log (Navlog) Data Rows Safely
     navlog_rows = []
     total_dist_cum = 0
-    
-    # Check if navlog is already a direct list of fixes, or a dict containing 'fix'
     navlog_data = raw_json.get('navlog', [])
     if isinstance(navlog_data, list):
         fixes = navlog_data
@@ -754,12 +748,10 @@ if target_username:
         r4 = f'<div class="nav-row">{php_date("Hi", f.get("time_total", 0))}    {format_latlon(f.get("pos_lat", 0), f.get("pos_long", 0))}    {f.get("track_mag", "")}M  {total_dist_cum:04d} {int(f.get("groundspeed", 0)):03d}  {int(f.get("mora", 0)) // 100:03d}   {f.get("wind_dir", 0)}{int(f.get("wind_spd", 0)):03d}</div>'
         navlog_rows.extend([r3, r4])
 
-    # Dynamic Profile Matrices
     climb_matrix = [format_wind_matrix_row(fx) for fx in fixes if fx.get('stage') == 'CLB' and fx.get('ident') != 'TOC']
     cruise_matrix = [format_wind_matrix_row(fx) for fx in fixes if fx.get('stage') == 'CRZ' and fx.get('ident') != 'TOD']
     descent_matrix = [format_wind_matrix_row(fx) for fx in fixes if fx.get('stage') == 'DSC']
 
-    # Map Charts Parsing
     map_images = []
     if 'images' in raw_json and 'map' in raw_json['images']:
         base_dir = raw_json['images'].get('directory', '')
@@ -768,7 +760,6 @@ if target_username:
         for m in maps:
             map_images.append({'name': m.get('name', 'Enroute Chart'), 'url': base_dir + m.get('link', '')})
 
-    # ETOPS Validation Logic Block
     etops_str, etops_entry_coord, etops_entry_time, etops_entry_apt_coord = "...", "", "", ""
     etops_exit_coord, etops_exit_time, etops_exit_apt_coord = "", "", ""
     critical_cp, deficit = "CP1", 0
@@ -834,11 +825,7 @@ if target_username:
     except:
         fooId = 3241
 
-    # Render metrics cleanly inside the Jinja structural template context engine
-    template_env = Environment(loader=BaseLoader())
-    template = template_env.from_string(TEMPLATE_STR)
-
-    # Calculate valid_ui safely by handling both ISO string or numeric epoch formats
+    # Safe Date Calculation before rendering template context parameters
     try:
         if isinstance(sched_out, str) and ('T' in sched_out or '-' in sched_out):
             clean_ts = sched_out.replace('Z', '+00:00')
@@ -849,13 +836,16 @@ if target_username:
         valid_ui_str = valid_ui_dt.strftime('%H%M')
     except Exception:
         valid_ui_str = ""
-        
+
+    template_env = Environment(loader=BaseLoader())
+    template = template_env.from_string(TEMPLATE_STR)
+    
     rendered_html = template.render(
         data=data_obj,
         gia805MetaHeader=gia805MetaHeader,
         callsign=callsign.upper(),
         flight_date=flight_date,
-        avg_wind_comp=format_wind_comp(raw_json['general'].get('avg_wind_comp', 0)),
+        avg_wind_comp=format_wind_comp(raw_json['general'].get('avg_comp_wind', raw_json['general'].get('avg_wind_comp', 0))),
         airport_info=airport_info,
         weather_info=weather_info,
         alternates=alternates_list,
@@ -895,14 +885,12 @@ if target_username:
         map_images=map_images
     )
 
-    # Output to virtual binary stream using WeasyPrint
     pdf_buffer = io.BytesIO()
     HTML(string=rendered_html).write_pdf(pdf_buffer)
     pdf_bytes = pdf_buffer.getvalue()
     
     st.success("✅ Operational Briefing compiled successfully!")
     
-    # Download Action Triggers
     pdf_filename = f"{callsign.upper()}_Briefing_Final.pdf"
     st.download_button(
         label=f"📥 Download Briefing Package ({pdf_filename})",
