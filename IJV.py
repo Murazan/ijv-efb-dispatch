@@ -837,17 +837,8 @@ if target_username:
     # Render metrics cleanly inside the Jinja structural template context engine
     template_env = Environment(loader=BaseLoader())
     template = template_env.from_string(TEMPLATE_STR)
-    
-    rendered_html = template.render(
-        data=data_obj,
-        gia805MetaHeader=gia805MetaHeader,
-        callsign=callsign.upper(),
-        flight_date=flight_date,
-        avg_wind_comp=format_wind_comp(raw_json['general'].get('avg_wind_comp', 0)),
-        airport_info=airport_info,
-        weather_info=weather_info,
-        alternates=alternates_list,
- # Calculate valid_ui safely by handling both ISO string or numeric epoch formats
+
+    # Calculate valid_ui safely by handling both ISO string or numeric epoch formats
     try:
         if isinstance(sched_out, str) and ('T' in sched_out or '-' in sched_out):
             clean_ts = sched_out.replace('Z', '+00:00')
@@ -858,6 +849,16 @@ if target_username:
         valid_ui_str = valid_ui_dt.strftime('%H%M')
     except Exception:
         valid_ui_str = ""
+        
+    rendered_html = template.render(
+        data=data_obj,
+        gia805MetaHeader=gia805MetaHeader,
+        callsign=callsign.upper(),
+        flight_date=flight_date,
+        avg_wind_comp=format_wind_comp(raw_json['general'].get('avg_wind_comp', 0)),
+        airport_info=airport_info,
+        weather_info=weather_info,
+        alternates=alternates_list,
         valid_ui=valid_ui_str,
         req_id_short=str(raw_json['params']['request_id'])[-5:],
         date_dMy=php_date('dMy', sched_out),
