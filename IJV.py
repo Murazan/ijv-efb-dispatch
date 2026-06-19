@@ -661,8 +661,10 @@ if target_username:
             st.stop()
 
     # Process structured metadata properties
-    sched_out = int(raw_json['times']['sched_out'])
+# Process structured metadata properties safely whether they are strings or integers
+    sched_out = raw_json['times']['sched_out'] 
     callsign = raw_json['atc'].get('callsign', f"GIA{raw_json['general']['flight_number']}")
+    
     flight_date = php_date('Y-m-d', sched_out)
     brief_d_m_y = php_date('d-m-y', sched_out)
     brief_H_i = php_date('Hi', sched_out)
