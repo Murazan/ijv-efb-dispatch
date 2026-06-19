@@ -353,7 +353,7 @@ def dashboard():
             return
             
             
-            with st.spinner(f"⏳ Mengunduh data dari SimBrief (Username: {sb_userid})..."):
+        with st.spinner(f"⏳ Mengunduh data dari SimBrief (Username: {sb_userid})..."):
             # Update 'userid=' menjadi 'username=' agar API SimBrief mencocokkan string dengan benar
             sb_url = f"https://www.simbrief.com/api/xml.fetcher.php?username={sb_userid}&json=1"
             try:
