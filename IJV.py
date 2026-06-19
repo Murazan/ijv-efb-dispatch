@@ -847,7 +847,18 @@ if target_username:
         airport_info=airport_info,
         weather_info=weather_info,
         alternates=alternates_list,
-        valid_ui=php_date('Hi', sched_out + 21600),
+ # Calculate valid_ui safely by handling both ISO string or numeric epoch formats
+    try:
+        if isinstance(sched_out, str) and ('T' in sched_out or '-' in sched_out):
+            clean_ts = sched_out.replace('Z', '+00:00')
+            base_dt = datetime.fromisoformat(clean_ts)
+        else:
+            base_dt = datetime.fromtimestamp(int(float(sched_out)), tz=timezone.utc)
+        valid_ui_dt = base_dt + timedelta(seconds=21600)
+        valid_ui_str = valid_ui_dt.strftime('%H%M')
+    except Exception:
+        valid_ui_str = ""
+        valid_ui=valid_ui_str,
         req_id_short=str(raw_json['params']['request_id'])[-5:],
         date_dMy=php_date('dMy', sched_out),
         etd_z=php_date('Hi', sched_out),
