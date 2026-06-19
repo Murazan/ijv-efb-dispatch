@@ -1074,15 +1074,6 @@ REQUEST NO. {{data.params.request_id[-5:]}} / REV NBR {{data.general.release}}
                 
                 st.success("✅ Berhasil! File PDF telah dibuat dan siap diunduh.")
                 
-                pdf_filename = f"GIA{data_obj.general.flight_number}_Briefing_Final.pdf"
-                st.download_button(
-                    label="📥 Download Flight Plan PDF",
-                    data=pdf_buffer.getvalue(),
-                    file_name=pdf_filename,
-                    mime="application/pdf",
-                    type="primary"
-                )
-                
                 # --- BERIKUT EDITAN UNTUK DIRECT PDF PREVIEW ---
                 pdf_filename = f"GIA{data_obj.general.flight_number}_Briefing_Final.pdf"
                 st.download_button(
