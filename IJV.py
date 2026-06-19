@@ -1079,7 +1079,7 @@ REQUEST NO. {{data.params.request_id[-5:]}} / REV NBR {{data.general.release}}
                 st.success("✅ OFP Generated and Ready for Download")
                 
                 # --- BERIKUT EDITAN UNTUK DIRECT PDF PREVIEW ---
-                pdf_filename = f"{data.general.icao_airline}{data_obj.general.flight_number}_Briefing.pdf"
+                pdf_filename = f"{{data.general.icao_airline}}{data_obj.general.flight_number}_Briefing.pdf"
                 st.download_button(
                     label="📥 Download OFP PDF",
                     data=pdf_buffer.getvalue(),
