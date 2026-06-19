@@ -342,8 +342,14 @@ def dashboard():
             st.warning("Silakan masukkan SimBrief User ID terlebih dahulu.")
             return
             
-        with st.spinner(f"⏳ Mengunduh data dari SimBrief (User ID: {sb_userid})..."):
-sb_url = f"https://www.simbrief.com/api/xml.fetcher.php?username={sb_userid}&json=1"
+if st.button("Generate Flight Plan PDF"):
+        if not sb_userid:
+            st.warning("Silakan masukkan SimBrief Username terlebih dahulu.")
+            return
+            
+        with st.spinner(f"⏳ Mengunduh data dari SimBrief (Username: {sb_userid})..."):
+            # This line must be indented further than the 'with' statement above
+            sb_url = f"https://www.simbrief.com/api/xml.fetcher.php?username={sb_userid}&json=1"
             try:
                 response = requests.get(sb_url, timeout=15)
                 response.raise_for_status()
