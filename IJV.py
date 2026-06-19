@@ -343,7 +343,7 @@ def dashboard():
             return
             
         with st.spinner(f"⏳ Mengunduh data dari SimBrief (User ID: {sb_userid})..."):
-        sb_url = f"https://www.simbrief.com/api/xml.fetcher.php?username={sb_userid}&json=1"
+sb_url = f"https://www.simbrief.com/api/xml.fetcher.php?username={sb_userid}&json=1"
             try:
                 response = requests.get(sb_url, timeout=15)
                 response.raise_for_status()
