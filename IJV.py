@@ -693,11 +693,11 @@ NO SIGNIFICANT NOTAM.
 
     <div class="footer-box">
         <b>Flight Dispatch Center</b><br>
-        Operation Center II Building 3rd Floor | Garuda City | Soekarno-Hatta International Airport<br>
+        Operation Center Building 69th Floor | IJV Tower | Soekarno-Hatta International Airport<br>
         Cengkareng 19120, Indonesia<br>
-        Office Phone: +62 21 559 0451, +62 21 2560 1524, +62 21 559 15428 | Fax: +62 21 550 1911<br>
-        Email Address: flight-dispatch-center@garuda-indonesia.com; cflightdispatch@gmail.com;<br>
-        SITA Address: JKTOIGA
+        Office Phone: +62 21 267 1949, +62 21 1607 2001, +62 21 241 1970 | Fax: +62 21 178 1945<br>
+        Email Address: contact@indonesiajourneyvirtual.org; flightdispatch@indonesiajourneyvirtual.org;<br>
+        SITA Address: IJVOF
     </div>
 
     <div class="page-break"></div>
