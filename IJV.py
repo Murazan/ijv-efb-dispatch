@@ -13,7 +13,7 @@ from weasyprint import HTML
 # ---------------------------------------------------------
 # KONFIGURASI HALAMAN (Harus dipanggil paling awal)
 # ---------------------------------------------------------
-st.set_page_config(page_title="IJV Crew Portal", page_icon="IJV.png", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="IJV Crew Portal", page_icon="IJV_Color.png", layout="wide", initial_sidebar_state="collapsed")
 
 # ---------------------------------------------------------
 # KELAS & FUNGSI HELPER
@@ -695,7 +695,7 @@ NO SIGNIFICANT NOTAM.
         <b>Flight Dispatch Center</b><br>
         Operation Center Building 69th Floor | IJV Tower | Soekarno-Hatta International Airport<br>
         Cengkareng 19120, Indonesia<br>
-        Office Phone: +62 21 267 1949, +62 21 1607 2001, +62 21 241 1970 | Fax: +62 21 178 1945<br>
+        Office Phone: +62 21 261 1949, +62 21 1607 2001, +62 21 241 1970 | Fax: +62 21 178 1945<br>
         Email Address: contact@indonesiajourneyvirtual.org; flightdispatch@indonesiajourneyvirtual.org;<br>
         SITA Address: IJVOF
     </div>
@@ -752,7 +752,7 @@ REGULATIONS AND OPERATION MANUAL PART A (OM-A)
     DISPATCHED BY               : FOO. {{data.crew.dx | upper}} - {{fooId}}
 
 I HEREBY PREPARE AND ARRANGE THIS FLIGHT DISPATCH RELEASE ACCORDING TO THE
-INSTRUCTION AND DATA PROVIDED BY PT. GARUDA INDONESIA (PERSERO) TBK.
+INSTRUCTION AND DATA PROVIDED BY INDONESIA JOURNEY VIRTUAL.
     NAME / ID                   : .................. / ........
 
                                    SIGN ......................
