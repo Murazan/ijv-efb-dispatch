@@ -770,7 +770,7 @@ I HEREBY ACCEPT THIS FLIGHT DISPATCH RELEASE WITH FULL ACKNOWLEDGEMENT.
 PLAN {{data.params.request_id[-5:]}} / REV NUM {{str_pad(data.general.release, 2, '0', 'left')}}       {{data.origin.icao_code}} TO {{data.destination.icao_code}}  {{data.aircraft.icaocode}}  {{helper.formatCruiseProfile(data.general.cruise_profile, data.general.costindex)}}/F  IFR  {{php_date('d/m/y',data.times.sched_out)}}
 NONSTOP COMPUTED {{php_date('Hi',data.params.time_generated)}} ETD {{php_date('Hi',data.times.sched_out)}}Z PROGS {{helper.getWeatherPrognosisTimes(data.times.sched_out)}} {{data.aircraft.reg}} KGS
 
-GARUDA INDONESIA CFP
+INDONESIA JOURNEY VIRTUAL CFP
 
 SPD SKD   CLB-{{helper.formatClimbSpeedProfile(data.general.climb_profile)}}  CRZ-{{helper.formatCruiseProfile(data.general.cruise_profile, data.general.costindex)}}   DSC-{{helper.formatDescendSpeedProfile(data.general.descent_profile)}}
 {% if data.etops and data.etops is mapping %}
