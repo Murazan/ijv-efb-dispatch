@@ -1,4 +1,4 @@
-streamlit
+streamlit[pdf]
 requests
 jinja2
 weasyprint
