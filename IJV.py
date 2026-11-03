@@ -1094,8 +1094,15 @@ REQUEST NO. {{data.params.request_id[-5:]}} / REV NBR {{data.general.release}}
                     data=pdf_buffer.getvalue(),
                     file_name=pdf_filename,
                     mime="application/pdf",
-                    type="primary"
+                    type="primary",
+                    on_click="ignore"  # no rerun on click, otherwise the preview below would disappear
                 )
+                
+                # Inline preview (needs streamlit[pdf] in requirements.txt); the download button above works even if this fails
+                try:
+                    st.pdf(pdf_buffer.getvalue(), height=800)
+                except Exception as e:
+                    st.warning(f"PDF preview unavailable: {e}")
                 
             except Exception as e:
                 st.error(f"❌ Terjadi kesalahan saat memproses data/PDF: {e}")
