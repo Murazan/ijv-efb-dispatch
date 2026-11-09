@@ -479,7 +479,6 @@ def dashboard():
         @page landscape-page {
             size: A4 landscape;
             margin: 0.5cm;
-            @bottom-right { content: "PAGE " counter(page) " OF " counter(pages); font-size: 8pt; font-family: Courier, monospace; color: #7D7D7D;}
             @top-right { content: "PACKAGE GIA{{data.general.flight_number}}"; font-size: 8pt; font-family: Courier, monospace; color: #7D7D7D;}
         }
 
@@ -492,9 +491,14 @@ def dashboard():
 
         /* HEADER & FOOTER UPDATED UNTUK FORMAT BARU */
         .header { position: fixed; top: -10px; left: 0; right: 0; text-align: right; font-size: 8pt; color: #7D7D7D; font-family: Courier, monospace; }
-        .footer { position: fixed; bottom: -20px; left: 0; right: 0; height: 20px; text-align: right; font-size: 8pt; color: #7D7D7D; font-family: Courier, monospace; }
-        .page-number:before { content: "BRIEFING TEXT {{data.general.icao_airline}}{{data.general.flight_number}}-{{php_date('d-m-y', data.times.sched_out)}}-{{php_date('Hi', data.times.sched_out)}}-{{data.origin.icao_code}} PAGE " counter(page) " OF " counter(pages); }
-        .page-number-footer:before { content: "PAGE " counter(page) " of " counter(pages); }
+        .watermark {
+            position: fixed; top: 50%; left: -50%; width: 200%;
+            height: 60pt; margin-top: -30pt; line-height: 60pt;
+            text-align: center; white-space: nowrap;
+            font-family: Courier, monospace; font-size: 36pt; font-weight: bold;
+            color: red; opacity: 0.2; transform: rotate(-45deg);
+        }
+        .page-number:before { content: "BRIEFING TEXT {{data.general.icao_airline}}{{data.general.flight_number}}-{{php_date('d-m-y', data.times.sched_out)}}-{{php_date('Hi', data.times.sched_out)}}-{{data.origin.icao_code}}"; }
 
         pre {
             margin: 0;
@@ -627,7 +631,7 @@ def dashboard():
 </head>
 <body>
     <div class="header"><div class="page-number"></div></div>
-    <div class="footer"><div class="page-number-footer"></div></div>
+    <div class="watermark">FOR FLIGHT SIMULATION ONLY</div>
 
     <div style="text-align: center; margin-bottom: 15px;">
         {% if logo_base64 %}
